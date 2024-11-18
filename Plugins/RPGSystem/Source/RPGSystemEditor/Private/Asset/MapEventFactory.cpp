@@ -30,7 +30,7 @@ UObject* UMapEventFactory::FactoryCreateNew(UClass* uckass, UObject* inParent, F
 {
 	UMapEvent* MapEvent = NewObject<UMapEvent>(inParent, name, flags);
 
-	UMapEventGraph::CreateGraph(MapEvent);
+	//UMapEventGraph::CreateGraph(MapEvent);
 
 	return MapEvent;
 }

@@ -1,6 +1,7 @@
 #include "Graph/Slate/SGraphNodeShowText.h"
 
 #include "Commands/ShowText.h"
+#include "MapEvent.h"
 
 void SGraphNodeShowText::Construct(const FArguments& InArgs, UEdGraphNode* InNode)
 {
@@ -21,11 +22,13 @@ TSharedRef<SWidget> SGraphNodeShowText::ShowContent()
 	Name = SNew(SEditableTextBox)
 		.ForegroundColor(FLinearColor::Black)
 		.BackgroundColor(FLinearColor::White)
+		.Text(ShowTextCommand->Name)
 		.OnTextCommitted(this, &SGraphNodeShowText::OnNameCommitted);
 
 	Text = SNew(SMultiLineEditableTextBox)
 		.ForegroundColor(FLinearColor::Black)
 		.BackgroundColor(FLinearColor::White)
+		.Text(ShowTextCommand->Text)
 		.OnTextCommitted(this, &SGraphNodeShowText::OnTextCommitted);
 
 	return SNew(SBorder)
@@ -114,14 +117,24 @@ void SGraphNodeShowText::OnNameCommitted(const FText& InText, ETextCommit::Type 
 {
 	if (InCommitType == ETextCommit::OnEnter)
 	{
+		if (UMapEvent* MapEvent = ShowTextCommand->GetTypedOuter<UMapEvent>())
+		{
+			MapEvent->Modify();
+		}
+		ShowTextCommand->Modify();
 		ShowTextCommand->SetName(InText);
 	}
 }
 
 void SGraphNodeShowText::OnTextCommitted(const FText& InText, ETextCommit::Type InCommitType)
 {
-	if (InCommitType == ETextCommit::OnEnter)
+	if (InCommitType == ETextCommit::OnUserMovedFocus)
 	{
+		if (UMapEvent* MapEvent = ShowTextCommand->GetTypedOuter<UMapEvent>())
+		{
+			MapEvent->Modify();
+		}
+		ShowTextCommand->Modify();
 		ShowTextCommand->SetText(InText);
 	}
 }

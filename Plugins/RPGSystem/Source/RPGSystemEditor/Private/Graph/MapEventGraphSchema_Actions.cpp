@@ -23,9 +23,39 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 		return nullptr;
 	}
 
-	if (EventCommandClass)
+	if (EventCommandClass != nullptr)
 	{
-		return CreateNode(ParentGraph, FromPin, EventCommandClass, Location, bSelectNewNode);
+		const FScopedTransaction Transaction(LOCTEXT("AddCommand", "Add command"));
+		ParentGraph->Modify();
+		if (FromPin)
+		{
+			FromPin->Modify();
+		}
+
+		FGraphNodeCreator<UCommandNode> NodeCreator(*ParentGraph);
+		UCommandNode* CommandNode = NodeCreator.CreateNode();
+		NodeCreator.Finalize();
+
+		const UEdGraphSchema* Schema = ParentGraph->GetSchema();
+		Schema->SetNodeMetaData(CommandNode, FNodeMetadata::DefaultGraphNode);
+
+		if (UMapEvent* MapEvent = ParentGraph->GetTypedOuter<UMapEvent>())
+		{
+			UBaseCommand* NewCommand = MapEvent->CreateCommand(EventCommandClass, CommandNode);
+			CommandNode->SetCommandData(NewCommand);
+		}
+
+		//UCommandNode* NewCommandNode = UCommandNode::StaticClass()->GetDefaultObject();
+
+		//EventCommandClass->SetFlags(RF_Transactional);
+
+		////Setup the node within the graph 
+		//PlaceNodeInGraph(ParentGraph, Location, FromPin);
+
+		return CommandNode;
+
+
+		//return CreateNode(ParentGraph, FromPin, EventCommandClass, Location, bSelectNewNode);
 	}
 
 	return nullptr;
@@ -40,8 +70,8 @@ UCommandNode* FMapEventGraphSchemaAction_NewNode::CreateNode(class UEdGraph* Gra
 
     Graph->Modify();
 
-    UMapEvent* MapEvent = CastChecked<UMapEventGraph>(Graph)->GetMapEvent();
-    MapEvent->Modify();
+	/*UMapEvent* MapEvent = CastChecked<UMapEventGraph>(Graph)->GetMapEvent();
+	MapEvent->Modify();*/
 
     TSubclassOf<UBaseCommand> BaseCommandClass = const_cast<UClass*>(EventCommandClass);
     TSubclassOf<UEdGraphNode> GraphNodeClass = UMapEventGraphSchema::GetAssignedGraphNodeClass(BaseCommandClass);
@@ -50,15 +80,15 @@ UCommandNode* FMapEventGraphSchemaAction_NewNode::CreateNode(class UEdGraph* Gra
     NewCommandNode->CreateNewGuid();
     Graph->AddNode(NewCommandNode, false, false);
 
-    UBaseCommand* Command = MapEvent->CreateCommand(EventCommandClass, NewCommandNode);
-    NewCommandNode->SetCommandData(Command);
+	/*UBaseCommand* Command = MapEvent->CreateCommand(EventCommandClass, NewCommandNode);
+	NewCommandNode->SetCommandData(Command);
 
-    if (FromPin != nullptr)
-    {
-        UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode());
-        UBaseCommand* FromCommand = FromNode->GetCommandData();
-        FromCommand->SetNextCommand(Command);
-    }
+	if (FromPin != nullptr)
+	{
+		UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode());
+		UBaseCommand* FromCommand = FromNode->GetCommandData();
+		FromCommand->SetNextCommand(Command);
+	}*/
 
     NewCommandNode->AllocateDefaultPins();
     NewCommandNode->AutowireNewNode(FromPin);
@@ -70,7 +100,7 @@ UCommandNode* FMapEventGraphSchemaAction_NewNode::CreateNode(class UEdGraph* Gra
 
     Graph->NotifyGraphChanged();
 
-    MapEvent->PostEditChange();
+    //MapEvent->PostEditChange();
 
     return NewCommandNode;
 }

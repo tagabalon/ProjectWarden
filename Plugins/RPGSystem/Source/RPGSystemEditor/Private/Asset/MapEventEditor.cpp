@@ -6,6 +6,7 @@
 #include "Graph/MapEventGraph.h"
 #include "Graph/MapEventGraphSchema.h"
 #include "MapEventEditorCommands.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 
 #include "MapEvent.h"
 
@@ -31,11 +32,28 @@ void FMapEventEditor::InitMapEventEditor(const EToolkitMode::Type Mode, const TS
 {
     MapEvent = CastChecked<UMapEvent>(ObjectToEdit);
 
-    UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(MapEvent->GetGraph());
-    if (IsValid(MapEventGraph))
+    if (MapEvent->GetGraph() == nullptr)
     {
-        MapEventGraph->OnLoaded();
+        UEdGraph* NewGraph = FBlueprintEditorUtils::CreateNewGraph(
+            MapEvent,
+            NAME_None,
+            UMapEventGraph::StaticClass(),
+            UMapEventGraphSchema::StaticClass()
+        );
+        check(NewGraph);
+
+        MapEvent->SetGraph(NewGraph);
+        MapEvent->GetGraph()->bAllowDeletion = false;
+
+		const UEdGraphSchema* Schema = NewGraph->GetSchema();
+		Schema->CreateDefaultNodesForGraph(*NewGraph);
     }
+
+	/*UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(MapEvent->GetGraph());
+	if (IsValid(MapEventGraph))
+	{
+		MapEventGraph->OnLoaded();
+	}*/
 
     // Support undo/redo
     MapEvent->SetFlags(RF_Transactional);

@@ -53,26 +53,29 @@ void SGraphNodeCommand::UpdateGraphNode()
 		];
 
 	TSharedRef<SBorder> NodeContent = SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("NoBorder"))
+		//.BorderImage(FMapEventEditorStyle::GetBrush("CommandNode.Body"))
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Fill)
 		[
 			SNew(SHorizontalBox)
+
 				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
-				.FillWidth(1.0f)
+				.AutoWidth()
+				.Padding(FMargin(-30, 0, 0, 20))
 				[
 					SAssignNew(LeftNodeBox, SVerticalBox)
 				]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
-				.HAlign(HAlign_Right)
+				.HAlign(HAlign_Center)
 				[
 					ShowContent()
 				]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.HAlign(HAlign_Right)
+				.Padding(FMargin(20, 0, 0, -30))
 				[
 					SAssignNew(RightNodeBox, SVerticalBox)
 				]
@@ -91,6 +94,7 @@ void SGraphNodeCommand::UpdateGraphNode()
 //];
 
 	TSharedPtr<SOverlay> MainBox;
+
 	this->GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Center)
 		.VAlign(VAlign_Center)
@@ -100,7 +104,6 @@ void SGraphNodeCommand::UpdateGraphNode()
 				[
 					SNew(SImage)
 						.Image(FMapEventEditorStyle::GetBrush("CommandNode.Body"))
-						.ColorAndOpacity(FColor::White)
 				]
 				+ SOverlay::Slot()
 				[

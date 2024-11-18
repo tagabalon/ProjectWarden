@@ -37,13 +37,13 @@ class RPGSYSTEM_API UMapEvent : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-public:	
+public:
 	UPROPERTY(/*VisibleAnywhere, BlueprintReadOnly, Category = "Map Event"*/)
 	FGuid AssetGuid;
 
-	const TMap<FGuid, UBaseCommand*>& GetCommands() const { return Commands; }
+	const TArray<UBaseCommand*>& GetCommands() const { return Commands; }
 
-	IEventCommandInterface* GetRootCommand() const { return RootCommand; }
+	//IEventCommandInterface* GetRootCommand() const { return RootCommand; }
 	void Execute(APlayerController* Player);
 
 
@@ -51,21 +51,22 @@ public:
 	friend class UMapEventGraph;
 
 	UEdGraph* GetGraph() const { return Graph; }
+	void SetGraph(UEdGraph* InGraph) { Graph = InGraph; }
 	UBaseCommand* CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode);
 	void RegisterCommand(const FGuid& NewGuid, UBaseCommand* NewCommand);
 #endif
 
 private:
-	UPROPERTY()
-	TMap<FGuid, UBaseCommand*> Commands;
-	
 	UPROPERTY(VisibleAnywhere)
-	UBaseCommand* RootCommand = nullptr;
+	TArray<UBaseCommand*> Commands;
+	
+	/*UPROPERTY(VisibleAnywhere)
+	UBaseCommand* RootCommand = nullptr;*/
 
 #if WITH_EDITORONLY_DATA
 
 	UPROPERTY()
-	TObjectPtr<UEdGraph> Graph;
+	UEdGraph* Graph = nullptr;
 
 #endif
 };

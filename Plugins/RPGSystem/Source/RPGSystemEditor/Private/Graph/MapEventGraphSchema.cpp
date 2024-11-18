@@ -69,12 +69,28 @@ void UMapEventGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 
 void UMapEventGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
-    const UMapEvent* AssetClassDefaults = GetEditedAssetOrClassDefault(&Graph);
-    static const FVector2D NodeOffsetIncrement = FVector2D(0, 128);
-    FVector2D NodeOffset = FVector2D::ZeroVector;
+    FGraphNodeCreator<UCommandNode> NodeCreator(Graph);
+    UCommandNode* CommandNode = NodeCreator.CreateNode();
+    NodeCreator.Finalize();
+    SetNodeMetaData(CommandNode, FNodeMetadata::DefaultGraphNode);
+
+    UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(&Graph);
+    MapEventGraph->SetStartNode(CommandNode);
+
+    //const UMapEvent* AssetClassDefaults = GetEditedAssetOrClassDefault(&Graph);
+
+	/*if (AssetClassDefaults->GetCommands().Num() > 0)
+	{
+		UBaseCommand* RootCommand = AssetClassDefaults->GetCommands()[0];
+		CommandNode->SetCommandData(RootCommand);
+		RootCommand->SetGraphNode(CommandNode);
+	}*/
+
+    //static const FVector2D NodeOffsetIncrement = FVector2D(0, 128);
+    //FVector2D NodeOffset = FVector2D::ZeroVector;
 
     // Start node
-    CreateCommand(Graph, AssetClassDefaults, UStart::StaticClass(), NodeOffset);
+    //CreateCommand(Graph, AssetClassDefaults, UStart::StaticClass(), NodeOffset);
 }
 
 UCommandNode* UMapEventGraphSchema::CreateCommand(UEdGraph& Graph, const UMapEvent* AssetClassDefaults, const TSubclassOf<UBaseCommand>& EventCommandClass, const FVector2D& Offset)
@@ -202,13 +218,13 @@ const FPinConnectionResponse UMapEventGraphSchema::CanCreateConnection(const UEd
 
 const UMapEvent* UMapEventGraphSchema::GetEditedAssetOrClassDefault(const UEdGraph* EdGraph)
 {
-    if (const UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(EdGraph))
-    {
-        if (UMapEvent* MapEvent = MapEventGraph->GetMapEvent())
-        {
-            return MapEvent;
-        }
-    }
+	/*if (const UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(EdGraph))
+	{
+		if (UMapEvent* MapEvent = MapEventGraph->GetMapEvent())
+		{
+			return MapEvent;
+		}
+	}*/
 
     const UClass* AssetClass = UMapEvent::StaticClass();
     return AssetClass->GetDefaultObject<UMapEvent>();

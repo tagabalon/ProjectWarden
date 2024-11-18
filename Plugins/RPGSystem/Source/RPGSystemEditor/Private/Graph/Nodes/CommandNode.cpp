@@ -21,16 +21,21 @@ UCommandNode::UCommandNode(const FObjectInitializer& ObjectInitializer)
 void UCommandNode::SetCommandData(UBaseCommand* NewCommand)
 {
 	this->Command = NewCommand;
+	AllocateDefaultPins();
 }
 
 
 TSharedPtr<SGraphNode> UCommandNode::CreateVisualWidget()
 {
+	if (Command == nullptr)
+	{
+		return SNew(SGraphNodeCommand, this);
+	}
 	if (Command->GetClass() == UShowText::StaticClass())
 	{
 		return SNew(SGraphNodeShowText, this);
 	}
-	return SNew(SGraphNodeCommand, this);
+	return SNew(SGraphNodeDefault);
 }
 
 
@@ -41,7 +46,7 @@ FText UCommandNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 		return Command->GetLabel();
 	}
 
-	return Super::GetNodeTitle(TitleType);
+	return FText::FromString("Start");
 }
 
 void UCommandNode::ReconstructNode()
@@ -62,6 +67,10 @@ void UCommandNode::AllocateDefaultPins()
 		{
 			CreateOutputPin(i);
 		}
+	}
+	else
+	{
+		CreateOutputPin(0);
 	}
 }
 
