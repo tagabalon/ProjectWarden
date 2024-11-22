@@ -1,5 +1,7 @@
 #include "Commands/BaseCommand.h"
 
+#include "Actors/MapEventActor.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BaseCommand)
 
 UBaseCommand::UBaseCommand(const FObjectInitializer& ObjectInitializer)
@@ -8,14 +10,14 @@ UBaseCommand::UBaseCommand(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-void UBaseCommand::Execute(APlayerController* Player)
+void UBaseCommand::Execute(APlayerController* Player, AMapEventActor* MapEventActor)
 {
 	if (NextCommand == this)
 		return;
 
 	if (NextCommand != nullptr)
 	{
-		NextCommand->Execute(Player);
+		NextCommand->Execute(Player, MapEventActor);
 	}
 }
 

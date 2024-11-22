@@ -26,6 +26,7 @@ public class RPGSystem : ModuleRules
 			new string[]
 			{
 				"Core",
+                "EnhancedInput"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -39,8 +40,7 @@ public class RPGSystem : ModuleRules
 				"Slate",
 				"SlateCore",
 				"UMG",
-				"DeveloperSettings",
-				"EnhancedInput"
+				"DeveloperSettings"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

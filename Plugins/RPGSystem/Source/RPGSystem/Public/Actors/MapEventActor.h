@@ -13,6 +13,16 @@ class USphereComponent;
 class UWidgetComponent;
 class UInputAction;
 
+UENUM(BlueprintType)
+enum class ETriggerCondition : uint8
+{
+	None,
+	Interact,
+	Proximity,
+	Auto
+};
+
+
 UCLASS()
 class RPGSYSTEM_API AMapEventActor : public AActor
 {
@@ -20,7 +30,7 @@ class RPGSYSTEM_API AMapEventActor : public AActor
 	
 public:	
 	// Sets default values for this actor's properties
-	AMapEventActor();
+	AMapEventActor(const FObjectInitializer& ObjectInitializer);
 
 	UFUNCTION(BlueprintCallable, Category="Components|Sphere")
 	void SetPromptDistance(float InPromptDistance);
@@ -42,9 +52,11 @@ protected:
 	UFUNCTION()
 	void OnSphereLeave(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-
 	UPROPERTY(EditInstanceOnly, Category="Map Event")
 	UMapEvent* MapEvent = nullptr;
+
+	UPROPERTY(EditInstanceOnly, Category = "Map Event")
+	ETriggerCondition TriggerCondition;
 
 	/** The radius of the sphere **/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, export, Category = "Map Event")
@@ -60,7 +72,7 @@ protected:
 	TSubclassOf<UUserWidget> PromptWidget;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	USphereComponent* Sphere;
+	USphereComponent* AwarenessSphere;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	UWidgetComponent* Prompt;
@@ -71,6 +83,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+	void CreateAwarenessSphere();
+	void CreateInteractPrompt();
+	void InitializeInteract();
 
 private:
 	bool CharacterCanBePrompted() const;

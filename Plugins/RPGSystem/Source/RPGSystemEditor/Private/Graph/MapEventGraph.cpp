@@ -12,6 +12,15 @@ UMapEventGraph::UMapEventGraph()
 
 }
 
+//UCommandNode* UMapEventGraph::CreateCommandNode(const UClass* EventCommandClass)
+//{
+//	UCommandNode* NewCommandNode = CreateDefaultSubobject<UCommandNode>(FName(EventCommandClass->GetName()));
+//	NewCommandNode->CreateNewGuid();
+//	AddNode(NewCommandNode, false, false);
+//
+//	return NewCommandNode;
+//}
+
 void UMapEventGraph::SetStartNode(UCommandNode* InStartNode)
 {
 	StartNode = InStartNode;

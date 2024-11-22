@@ -20,18 +20,17 @@ class RPGSYSTEMEDITOR_API UMapEventGraphSchema : public UEdGraphSchema
 
 private:
 	static TArray<UClass*> NativeCommandNodes;
-	static TMap<TSubclassOf<UBaseCommand>, TSubclassOf<UEdGraphNode>> GraphNodesByCommandNodes;
 
 public:
     virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* a, const UEdGraphPin* b) const override;
 
 	// EdGraphSchema
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
+	virtual void GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 
 	static void SubscribeToAssetChanges();
 	static const UMapEvent* GetEditedAssetOrClassDefault(const UEdGraph* Graph);
-	static TSubclassOf<UEdGraphNode> GetAssignedGraphNodeClass(const TSubclassOf<UBaseCommand>& EventCommandClass);
 
 
 protected:

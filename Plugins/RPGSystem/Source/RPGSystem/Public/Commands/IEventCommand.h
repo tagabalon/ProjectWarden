@@ -4,6 +4,7 @@
 #include "UObject/Interface.h"
 #include "IEventCommand.generated.h"
 
+class AMapEventActor;
 class APlayerController;
 
 /*
@@ -31,5 +32,5 @@ public:
 	virtual int32 GetGraphPosX() const = 0;
 	virtual int32 GetGraphPosY() const = 0;
 	virtual IEventCommandInterface* GetNextCommand() const = 0;
-	virtual void Execute(APlayerController* Player) = 0;
+	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor) = 0;
 };

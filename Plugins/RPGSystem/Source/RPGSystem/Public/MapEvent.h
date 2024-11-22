@@ -10,10 +10,12 @@
 
 #include "MapEvent.generated.h"
 
+class AMapEventActor;
 class APlayerController;
 class UEdGraph;
 class UEdGraphNode;
 class UMapEvent;
+
 
 #if WITH_EDITOR
 
@@ -44,7 +46,7 @@ public:
 	const TArray<UBaseCommand*>& GetCommands() const { return Commands; }
 
 	//IEventCommandInterface* GetRootCommand() const { return RootCommand; }
-	void Execute(APlayerController* Player);
+	void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
 
 #if WITH_EDITOR
@@ -52,16 +54,15 @@ public:
 
 	UEdGraph* GetGraph() const { return Graph; }
 	void SetGraph(UEdGraph* InGraph) { Graph = InGraph; }
-	UBaseCommand* CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode);
+	UBaseCommand* CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode, UBaseCommand* FromCommand);
 	void RegisterCommand(const FGuid& NewGuid, UBaseCommand* NewCommand);
 #endif
+
+protected:
 
 private:
 	UPROPERTY(VisibleAnywhere)
 	TArray<UBaseCommand*> Commands;
-	
-	/*UPROPERTY(VisibleAnywhere)
-	UBaseCommand* RootCommand = nullptr;*/
 
 #if WITH_EDITORONLY_DATA
 

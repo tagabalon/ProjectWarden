@@ -1,5 +1,6 @@
 #include "Commands/ShowText.h"
 
+#include "Actors/MapEventActor.h"
 #include "Interface/MessageInterface.h"
 #include "RPGSettings.h"
 #include "MapEvent.h"
@@ -10,13 +11,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(ShowText)
 
-//UShowText::UShowText(const FObjectInitializer& ObjectInitializer)
-//	: Super(ObjectInitializer)
-//{
-//	MessagesWidget = URPGSettings::Get()->GetMessagesWidget();
-//}
-
-void UShowText::Execute(APlayerController* Player)
+void UShowText::Execute(APlayerController* Player, AMapEventActor* MapEventActor)
 {
 	if (AHUD* HUD = Player->GetHUD())
 	{
@@ -25,5 +20,4 @@ void UShowText::Execute(APlayerController* Player)
 			IMessageInterface::Execute_ShowText(HUD, this);
 		}
 	}
-
 }

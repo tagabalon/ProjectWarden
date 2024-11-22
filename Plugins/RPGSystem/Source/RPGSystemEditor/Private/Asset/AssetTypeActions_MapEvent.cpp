@@ -41,3 +41,4 @@ uint32 FAssetTypeActions_MapEvent::GetCategories()
 	return FRPGSystemEditorModule::MapEventAssetCategory;
 }
 
+#undef LOCTEXT_NAMESPACE

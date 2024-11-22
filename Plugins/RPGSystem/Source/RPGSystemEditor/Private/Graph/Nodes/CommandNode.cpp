@@ -1,9 +1,11 @@
 #include "Graph/Nodes/CommandNode.h"
 #include "Graph/MapEventGraphSchema.h"
+#include "Graph/Slate/SGraphNodePlaySpeech.h"
 #include "Graph/Slate/SGraphNodeShowText.h"
 
 #include "Commands/BaseCommand.h"
 #include "Commands/Start.h"
+#include "Commands/PlaySpeech.h"
 #include "Commands/ShowText.h"
 
 #include "SGraphNodeDefault.h"
@@ -35,6 +37,10 @@ TSharedPtr<SGraphNode> UCommandNode::CreateVisualWidget()
 	{
 		return SNew(SGraphNodeShowText, this);
 	}
+	else if (Command->GetClass() == UPlaySpeech::StaticClass())
+	{
+		return SNew(SGraphNodePlaySpeech, this);
+	}
 	return SNew(SGraphNodeDefault);
 }
 
@@ -58,11 +64,13 @@ void UCommandNode::AllocateDefaultPins()
 {
 	if (IsValid(Command))
 	{
+		InputPins.Empty();
 		for (uint32 i = 0; i < Command->GetInputPins(); i++)
 		{
 			CreateInputPin(i);
 		}
 
+		OutputPins.Empty();
 		for (uint32 i = 0; i < Command->GetOutputPins(); i++)
 		{
 			CreateOutputPin(i);

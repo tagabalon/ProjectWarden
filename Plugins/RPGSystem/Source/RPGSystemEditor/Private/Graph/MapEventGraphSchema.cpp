@@ -3,8 +3,6 @@
 #include "Graph/MapEventGraph.h"
 #include "Graph/Nodes/CommandNode.h"
 #include "Graph/MapEventGraphSchema_Actions.h"
-//#include "EventCommandNode.h"
-#include "Commands/ShowMessage.h"
 
 #include "Commands/Start.h"
 #include "MapEvent.h"
@@ -16,7 +14,6 @@
 #define LOCTEXT_NAMESPACE "MapEventGraphSchema"
 
 TArray<UClass*> UMapEventGraphSchema::NativeCommandNodes;
-TMap<TSubclassOf<UBaseCommand>, TSubclassOf<UEdGraphNode>> UMapEventGraphSchema::GraphNodesByCommandNodes;
 bool UMapEventGraphSchema::bAreNodesGathered = false;
 
 //void UMapEventGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& contextMenuBuilder) const {
@@ -67,6 +64,12 @@ void UMapEventGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
     }
 }
 
+void UMapEventGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
+{
+    UEdGraphSchema::GetContextMenuActions(Menu, Context);
+}
+
+
 void UMapEventGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
     FGraphNodeCreator<UCommandNode> NodeCreator(Graph);
@@ -93,42 +96,17 @@ void UMapEventGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
     //CreateCommand(Graph, AssetClassDefaults, UStart::StaticClass(), NodeOffset);
 }
 
-UCommandNode* UMapEventGraphSchema::CreateCommand(UEdGraph& Graph, const UMapEvent* AssetClassDefaults, const TSubclassOf<UBaseCommand>& EventCommandClass, const FVector2D& Offset)
-{
-    UCommandNode* NewCommandNode = FMapEventGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, EventCommandClass, Offset);
-
-
-    
-
-    SetNodeMetaData(NewCommandNode, FNodeMetadata::DefaultGraphNode);
-
-    return NewCommandNode;
-}
-
-TSubclassOf<UEdGraphNode> UMapEventGraphSchema::GetAssignedGraphNodeClass(const TSubclassOf<UBaseCommand>& EventCommandClass)
-{
-    TArray<TSubclassOf<UBaseCommand>> FoundParentClasses;
-    UClass* ReturnClass = nullptr;
-
-    for (const TPair<TSubclassOf<UBaseCommand>, TSubclassOf<UEdGraphNode>>& GraphNodeByCommandNode : GraphNodesByCommandNodes)
-    {
-        if (EventCommandClass == GraphNodeByCommandNode.Key)
-        {
-            return GraphNodeByCommandNode.Value;
-        }
-
-        if (EventCommandClass->IsChildOf(GraphNodeByCommandNode.Key))
-        {
-            FoundParentClasses.Add(GraphNodeByCommandNode.Key);
-        }
-    }
-	if (FoundParentClasses.Num() == 1)
-	{
-		ReturnClass = GraphNodesByCommandNodes.FindRef(FoundParentClasses[0]);
-	}
-
-	return IsValid(ReturnClass) ? ReturnClass : UCommandNode::StaticClass();
-}
+//UCommandNode* UMapEventGraphSchema::CreateCommand(UEdGraph& Graph, const UMapEvent* AssetClassDefaults, const TSubclassOf<UBaseCommand>& EventCommandClass, const FVector2D& Offset)
+//{
+//    UCommandNode* NewCommandNode = FMapEventGraphSchemaAction_NewNode::CreateNode(&Graph, nullptr, EventCommandClass, Offset);
+//
+//
+//    
+//
+//    SetNodeMetaData(NewCommandNode, FNodeMetadata::DefaultGraphNode);
+//
+//    return NewCommandNode;
+//}
 
 void UMapEventGraphSchema::GatherNodes()
 {
@@ -145,23 +123,7 @@ void UMapEventGraphSchema::GatherNodes()
         return;
     }
 
-    TArray<UClass*> CommandNodes;
     GetDerivedClasses(UBaseCommand::StaticClass(), NativeCommandNodes);
-
-    TArray<UClass*> GraphNodes;
-    GetDerivedClasses(UCommandNode::StaticClass(), GraphNodes);
-
-    for (UClass* GraphNodeClass : GraphNodes)
-    {
-        const UCommandNode* GraphNodeDefault = GraphNodeClass->GetDefaultObject<UCommandNode>();
-        for (UClass* AssignedClass : GraphNodeDefault->AssignedCommandClasses)
-        {
-            if (AssignedClass->IsChildOf(UBaseCommand::StaticClass()))
-            {
-                GraphNodesByCommandNodes.Emplace(AssignedClass, GraphNodeClass);
-            }
-        }
-    }
 
     bAreNodesGathered = true;
 }

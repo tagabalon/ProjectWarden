@@ -4,6 +4,7 @@
 #include "BaseCommand.h"
 #include "ShowText.generated.h"
 
+class AMapEventActor;
 /*
 */
 UCLASS(Blueprintable, Category="RPG System")
@@ -24,11 +25,9 @@ public:
 public:
 	void SetName(FText InName) { Name = InName; }
 	void SetText(FText InText) { Text = InText; }
-	virtual void Execute(APlayerController* Player);
+	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
 private:
-
-	UUserWidget* MessagesWidget;
 
 	//BaseCommand
 	virtual FText GetCategory() const

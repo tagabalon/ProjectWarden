@@ -4,6 +4,8 @@
 #include "IEventCommand.h"
 #include "BaseCommand.generated.h"
 
+class AMapEventActor;
+
 /*
 */
 UCLASS(Abstract, Blueprintable)
@@ -64,7 +66,7 @@ public:
 			return 1;
 	}
 
-	virtual void Execute(APlayerController* Player);
+	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
 protected:
 	FVector2D GraphPosition;

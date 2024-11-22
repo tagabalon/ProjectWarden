@@ -45,8 +45,8 @@ struct RPGSYSTEMEDITOR_API FMapEventGraphSchemaAction_NewNode : public FEdGraphS
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	// --
 
-	static UCommandNode* CreateNode(class UEdGraph* Graph, UEdGraphPin* FromPin, const UClass* EventCommandClass, const FVector2D Location, const bool bSelectNewNode = true);
-	/*static UCommandNode* RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowNode* FlowNode);
+	/*static UCommandNode* CreateNode(class UEdGraph* Graph, UEdGraphPin* FromPin, const UClass* EventCommandClass, const FVector2D Location, const bool bSelectNewNode = true);
+	static UCommandNode* RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowNode* FlowNode);
 	static UCommandNode* ImportNode(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const UClass* NodeClass, const FGuid& NodeGuid, const FVector2D Location);*/
 	
 	/** parent node */

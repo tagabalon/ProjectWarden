@@ -36,14 +36,33 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 		UCommandNode* CommandNode = NodeCreator.CreateNode();
 		NodeCreator.Finalize();
 
+		CommandNode->SetFlags(RF_Transactional);
+
 		const UEdGraphSchema* Schema = ParentGraph->GetSchema();
 		Schema->SetNodeMetaData(CommandNode, FNodeMetadata::DefaultGraphNode);
 
+		UBaseCommand* FromCommand = nullptr;
+		if (FromPin != nullptr)
+		{
+			FromPin->Modify();
+			if (UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode()))
+			{
+				FromCommand = FromNode->GetCommandData();
+			}
+		}
+
 		if (UMapEvent* MapEvent = ParentGraph->GetTypedOuter<UMapEvent>())
 		{
-			UBaseCommand* NewCommand = MapEvent->CreateCommand(EventCommandClass, CommandNode);
+			UBaseCommand* NewCommand = MapEvent->CreateCommand(EventCommandClass, CommandNode, FromCommand);
 			CommandNode->SetCommandData(NewCommand);
 		}
+
+		CommandNode->NodePosX = Location.X;
+		CommandNode->NodePosY = Location.Y;
+		CommandNode->AllocateDefaultPins();
+		CommandNode->AutowireNewNode(FromPin);
+
+
 
 		//UCommandNode* NewCommandNode = UCommandNode::StaticClass()->GetDefaultObject();
 
@@ -61,46 +80,42 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 	return nullptr;
 }
 
-UCommandNode* FMapEventGraphSchemaAction_NewNode::CreateNode(class UEdGraph* Graph, UEdGraphPin* FromPin, const UClass* EventCommandClass, const FVector2D Location, const bool bSelectNewNode/* = true*/)
-{
-
-    check(EventCommandClass);
-
-    const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
-
-    Graph->Modify();
-
-	/*UMapEvent* MapEvent = CastChecked<UMapEventGraph>(Graph)->GetMapEvent();
-	MapEvent->Modify();*/
-
-    TSubclassOf<UBaseCommand> BaseCommandClass = const_cast<UClass*>(EventCommandClass);
-    TSubclassOf<UEdGraphNode> GraphNodeClass = UMapEventGraphSchema::GetAssignedGraphNodeClass(BaseCommandClass);
-    UCommandNode* NewCommandNode = NewObject<UCommandNode>(Graph, GraphNodeClass, FName(), RF_Transactional);
-
-    NewCommandNode->CreateNewGuid();
-    Graph->AddNode(NewCommandNode, false, false);
-
-	/*UBaseCommand* Command = MapEvent->CreateCommand(EventCommandClass, NewCommandNode);
-	NewCommandNode->SetCommandData(Command);
-
-	if (FromPin != nullptr)
-	{
-		UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode());
-		UBaseCommand* FromCommand = FromNode->GetCommandData();
-		FromCommand->SetNextCommand(Command);
-	}*/
-
-    NewCommandNode->AllocateDefaultPins();
-    NewCommandNode->AutowireNewNode(FromPin);
-
-    NewCommandNode->NodePosX = Location.X;
-    NewCommandNode->NodePosY = Location.Y;
-
-    NewCommandNode->PostPlacedNewNode();
-
-    Graph->NotifyGraphChanged();
-
-    //MapEvent->PostEditChange();
-
-    return NewCommandNode;
-}
+//UCommandNode* FMapEventGraphSchemaAction_NewNode::CreateNode(class UEdGraph* Graph, UEdGraphPin* FromPin, const UClass* EventCommandClass, const FVector2D Location, const bool bSelectNewNode/* = true*/)
+//{
+//    check(EventCommandClass);
+//
+//    const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
+//
+//	if (UMapEventGraph* MapEventGraph = CastChecked<UMapEventGraph>(Graph))
+//	{
+//		MapEventGraph->Modify();
+//
+//		UCommandNode* NewCommandNode = MapEventGraph->CreateCommandNode(EventCommandClass);
+//
+//	}
+//
+//
+//	/*UBaseCommand* Command = MapEvent->CreateCommand(EventCommandClass, NewCommandNode);
+//	NewCommandNode->SetCommandData(Command);
+//
+//	if (FromPin != nullptr)
+//	{
+//		UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode());
+//		UBaseCommand* FromCommand = FromNode->GetCommandData();
+//		FromCommand->SetNextCommand(Command);
+//	}*/
+//
+//    NewCommandNode->AllocateDefaultPins();
+//    NewCommandNode->AutowireNewNode(FromPin);
+//
+//    NewCommandNode->NodePosX = Location.X;
+//    NewCommandNode->NodePosY = Location.Y;
+//
+//    NewCommandNode->PostPlacedNewNode();
+//
+//    Graph->NotifyGraphChanged();
+//
+//    //MapEvent->PostEditChange();
+//
+//    return NewCommandNode;
+//}

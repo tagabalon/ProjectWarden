@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MainCharacter.h"
+#include "Actors/MainCharacter.h"
+
+#include "Actors/MapEventActor.h"
 #include "RPGSettings.h"
-#include "MapEventActor.h"
 
 #include "EnhancedActionKeyMapping.h"
 #include "EnhancedInputSubsystems.h"

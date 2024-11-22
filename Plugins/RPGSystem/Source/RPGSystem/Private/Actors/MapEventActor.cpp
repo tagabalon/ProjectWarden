@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MapEventActor.h"
+#include "Actors/MapEventActor.h"
 
-#include "MainCharacter.h"
+#include "Actors/MainCharacter.h"
 #include "Interface/InteractInterface.h"
 
 #include "Components/SphereComponent.h"
@@ -12,40 +12,55 @@
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
-AMapEventActor::AMapEventActor()
-	:  MapEvent(nullptr)
+AMapEventActor::AMapEventActor(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetNestedDefaultSubobjectClass<USceneComponent>(TEXT("DefaultSceneRoot")))
+	,  MapEvent(nullptr)
+	, TriggerCondition(ETriggerCondition::Interact)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
-
-	Sphere = CreateDefaultSubobject<USphereComponent>(FName("SphereBounds"));
-	Sphere->SetupAttachment(RootComponent);
-	Sphere->InitSphereRadius(GlintDistance);
-
-	Prompt = CreateDefaultSubobject<UWidgetComponent>(FName("Prompt"));
-	Prompt->SetupAttachment(RootComponent);
-	Prompt->SetWidgetSpace(EWidgetSpace::Screen);
-	Prompt->SetDrawSize(FVector2D(140.f, 100.0f));
+	CreateAwarenessSphere();
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetFinder(TEXT("WidgetBlueprint'/RPGSystem/Widgets/Interact/W_InteractPrompt.W_InteractPrompt_C'"));
 	if (WidgetFinder.Succeeded())
 	{
 		PromptWidget = WidgetFinder.Class;
+		CreateInteractPrompt();
+	}
+}
+
+void AMapEventActor::CreateAwarenessSphere()
+{
+	if(AwarenessSphere == nullptr)
+	{ 
+		AwarenessSphere = CreateDefaultSubobject<USphereComponent>(FName("AwarenessSphere"));
+		AwarenessSphere->SetupAttachment(RootComponent);
+	}
+	AwarenessSphere->InitSphereRadius(GlintDistance);
+}
+
+void AMapEventActor::CreateInteractPrompt()
+{
+	if(Prompt == nullptr)
+	{
+		Prompt = CreateDefaultSubobject<UWidgetComponent>(FName("Prompt"));
+		Prompt->SetupAttachment(RootComponent);
+		Prompt->SetWidgetSpace(EWidgetSpace::Screen);
+		Prompt->SetDrawSize(FVector2D(140.f, 100.0f));
 		Prompt->SetWidgetClass(PromptWidget);
 	}
 }
 
-// Called when the game starts or when spawned
-void AMapEventActor::BeginPlay()
+void AMapEventActor::InitializeInteract()
 {
-	Super::BeginPlay();
-
 	bIsCharacterPrompted = false;
 
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AMapEventActor::OnSphereOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &AMapEventActor::OnSphereLeave);
+	if (TriggerCondition == ETriggerCondition::Interact || TriggerCondition == ETriggerCondition::Proximity)
+	{
+		AwarenessSphere->OnComponentBeginOverlap.AddDynamic(this, &AMapEventActor::OnSphereOverlap);
+		AwarenessSphere->OnComponentEndOverlap.AddDynamic(this, &AMapEventActor::OnSphereLeave);
+	}
 
 	if (UUserWidget* PromptObject = Prompt->GetUserWidgetObject())
 	{
@@ -54,6 +69,15 @@ void AMapEventActor::BeginPlay()
 			InteractWidget = PromptObject;
 		}
 	}
+}
+
+// Called when the game starts or when spawned
+void AMapEventActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitializeInteract();
+	
 }
 
 // Called every frame
@@ -96,14 +120,14 @@ void AMapEventActor::OnInteract()
 {
 	if (MapEvent != nullptr)
 	{
-		MapEvent->Execute(UGameplayStatics::GetPlayerController(this, 0));
+		MapEvent->Execute(UGameplayStatics::GetPlayerController(this, 0), this);
 	}
 }
 
 void AMapEventActor::SetPromptDistance(float InPromptDistance)
 {
 	PromptDistance = InPromptDistance;
-	Sphere->SetSphereRadius(PromptDistance);
+	AwarenessSphere->SetSphereRadius(PromptDistance);
 }
 
 void AMapEventActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -132,13 +156,21 @@ void AMapEventActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 	FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
 	if (PropertyName == FName("GlintDistance"))
 	{
-		Sphere->InitSphereRadius(GlintDistance);
+		AwarenessSphere->InitSphereRadius(GlintDistance);
 	}
 	else if (PropertyName == FName("PromptWidget"))
 	{
 		/*if (UUserWidget::StaticClass() !=  PropertyChangedEvent.GetObjectBeingEdited(0)->GetClass())
 		{
 		}*/
+	}
+	else if (PropertyName == FName("TriggerCondition"))
+	{
+		if (TriggerCondition == ETriggerCondition::Interact || TriggerCondition == ETriggerCondition::Proximity)
+		{
+			CreateAwarenessSphere();
+			CreateInteractPrompt();
+		}
 	}
 }
 

@@ -16,6 +16,7 @@ class RPGSYSTEMEDITOR_API UMapEventGraph : public UEdGraph
 public:
 	UMapEventGraph();
 
+	//UCommandNode* CreateCommandNode(const UClass* EventCommandClass EventCommandClass);
 	void OnMapEventGraphChanged(const FEdGraphEditAction& EditAction);
 	void SetStartNode(UCommandNode* InStartNode);
 

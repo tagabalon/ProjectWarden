@@ -1,7 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RPGEngine.h"
-#include "MainCharacter.h"
+
+#include "Actors/MainCharacter.h"
 
 #include "Interfaces/IPluginManager.h"
 #include "Containers/StringConv.h"
