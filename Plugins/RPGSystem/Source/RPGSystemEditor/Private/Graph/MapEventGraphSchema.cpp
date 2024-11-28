@@ -1,13 +1,14 @@
 #include "Graph/MapEventGraphSchema.h"
 
+#include "Commands/Start.h"
 #include "Graph/MapEventGraph.h"
 #include "Graph/Nodes/CommandNode.h"
 #include "Graph/MapEventGraphSchema_Actions.h"
-
-#include "Commands/Start.h"
 #include "MapEvent.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Framework/Commands/GenericCommands.h"
+#include "GraphEditorActions.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MapEventGraphSchema)
 
@@ -66,6 +67,21 @@ void UMapEventGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 
 void UMapEventGraphSchema::GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const
 {
+    if(Context->Node != nullptr)
+    {
+        FToolMenuSection& NodeMenuSection = Menu->AddSection(
+            FName(TEXT("MapEventGraphSchemaNodeActions")),
+            LOCTEXT("NodeActionCategory", "Node Actions")
+        );
+
+        NodeMenuSection.AddMenuEntry(FGenericCommands::Get().Delete);
+		NodeMenuSection.AddMenuEntry(FGenericCommands::Get().Cut);
+		NodeMenuSection.AddMenuEntry(FGenericCommands::Get().Copy);
+		NodeMenuSection.AddMenuEntry(FGenericCommands::Get().Duplicate);
+        NodeMenuSection.AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
+
+    }
+
     UEdGraphSchema::GetContextMenuActions(Menu, Context);
 }
 
@@ -212,3 +228,4 @@ TArray<UBaseCommand*> UMapEventGraphSchema::GetCommandList()
 
     return CommandList;
 }
+#undef LOCTEXT_NAMESPACE

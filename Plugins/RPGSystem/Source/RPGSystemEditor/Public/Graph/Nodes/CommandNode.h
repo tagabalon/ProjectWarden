@@ -30,6 +30,11 @@ public:
 	virtual void ReconstructNode() override;
 	virtual void AllocateDefaultPins() override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
+	virtual bool CanUserDeleteNode() const;
+	virtual bool CanDuplicateNode() const override;
+
+	// UGraphNodeDialogueBase Impl
+	virtual FText GetContextMenuName() const;
 
 	void OnUpdateMapEvent(int32 UpdateFlags);
 	

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "BaseCommand.h"
 #include "ShowText.generated.h"
 

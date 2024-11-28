@@ -22,35 +22,56 @@ UMapEvent::UMapEvent(const FObjectInitializer& ObjectInitializer)
 
 void UMapEvent::Execute(APlayerController* Player, AMapEventActor* MapEventActor)
 {
-	if (Commands.Num() > 0)
+	if (RootCommand != nullptr)
 	{
-		Commands[0]->Execute(Player, MapEventActor);
+		RootCommand->Execute(Player, MapEventActor);
 	}
 	//if (RootCommand != nullptr)
 	//	RootCommand->Execute(Player);
 }
 
 #if WITH_EDITOR
+
 UBaseCommand* UMapEvent::CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode, UBaseCommand* FromCommand)
 {
-	UBaseCommand* NewCommand = NewObject<UBaseCommand>(this, EventCommandClass, EventCommandClass->GetFName(), RF_Transactional);
+	UBaseCommand* NewCommand = NewObject<UBaseCommand>(this, EventCommandClass, NAME_None, RF_Transactional);
 	NewCommand->SetGraphNode(GraphNode);
-	Commands.Add(NewCommand);
 
-	if (FromCommand != nullptr && Commands.Contains(FromCommand))
+	if (RootCommand == nullptr)
 	{
-		FromCommand->SetNextCommand(NewCommand);
+		RootCommand = NewCommand;
 	}
 
-	//RegisterCommand(GraphNode->NodeGuid, NewCommand);
-
-	//return NewCommand;
+	if (FromCommand != nullptr)
+	{
+		if(Contains(FromCommand))
+		{
+			FromCommand->SetNextCommand(NewCommand);
+		}
+	}
 	return NewCommand;
 }
 
-void UMapEvent::RegisterCommand(const FGuid& NewGuid, UBaseCommand* NewCommand)
+bool UMapEvent::Contains(IEventCommandInterface* Command) const
 {
-	NewCommand->SetGuid(NewGuid);
-	Commands.Add(NewCommand);
+	TArray<IEventCommandInterface*> Commands;
+	GetCommands(Commands);
+	return Commands.Contains(Command);
 }
+
+void UMapEvent::GetCommands(TArray<IEventCommandInterface*>& Commands) const
+{
+	Commands.Empty();
+	IEventCommandInterface* Curr = RootCommand;
+	while (Curr != nullptr) {
+		Commands.AddUnique(Curr);
+
+		Curr = Curr->GetNextCommand();
+		if (Curr != nullptr && Commands.Contains(Curr))
+		{
+			break;
+		}
+	}
+}
+
 #endif

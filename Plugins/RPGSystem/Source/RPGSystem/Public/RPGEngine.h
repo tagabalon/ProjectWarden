@@ -8,8 +8,6 @@
 
 #include "RPGEngine.generated.h"
 
-class IMessageInterface;
-
 /**
  * 
  */

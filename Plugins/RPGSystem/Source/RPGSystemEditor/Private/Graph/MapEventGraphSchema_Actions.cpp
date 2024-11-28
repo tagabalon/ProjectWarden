@@ -62,15 +62,6 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 		CommandNode->AllocateDefaultPins();
 		CommandNode->AutowireNewNode(FromPin);
 
-
-
-		//UCommandNode* NewCommandNode = UCommandNode::StaticClass()->GetDefaultObject();
-
-		//EventCommandClass->SetFlags(RF_Transactional);
-
-		////Setup the node within the graph 
-		//PlaceNodeInGraph(ParentGraph, Location, FromPin);
-
 		return CommandNode;
 
 
@@ -119,3 +110,5 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 //
 //    return NewCommandNode;
 //}
+
+#undef LOCTEXT_NAMESPACE

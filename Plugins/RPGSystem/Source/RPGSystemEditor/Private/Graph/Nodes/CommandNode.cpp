@@ -62,6 +62,7 @@ void UCommandNode::ReconstructNode()
 
 void UCommandNode::AllocateDefaultPins()
 {
+	Pins.Empty();
 	if (IsValid(Command))
 	{
 		InputPins.Empty();
@@ -152,3 +153,24 @@ void UCommandNode::OnUpdateMapEvent(int32 UpdateFlags)
 {
 
 }
+
+bool UCommandNode::CanUserDeleteNode() const
+{
+	return Command != nullptr;
+}
+
+bool UCommandNode::CanDuplicateNode() const
+{
+	return Command != nullptr;
+}
+
+FText UCommandNode::GetContextMenuName() const
+{
+	if (Command != nullptr)
+	{
+		return FText::FromName(Command->StaticClass()->GetFName());
+	}
+	return FText::FromString("Start");
+}
+
+#undef LOCTEXT_NAMESPACE

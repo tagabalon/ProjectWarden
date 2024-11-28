@@ -43,8 +43,6 @@ public:
 	UPROPERTY(/*VisibleAnywhere, BlueprintReadOnly, Category = "Map Event"*/)
 	FGuid AssetGuid;
 
-	const TArray<UBaseCommand*>& GetCommands() const { return Commands; }
-
 	//IEventCommandInterface* GetRootCommand() const { return RootCommand; }
 	void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
@@ -52,17 +50,18 @@ public:
 #if WITH_EDITOR
 	friend class UMapEventGraph;
 
+	void GetCommands(TArray<IEventCommandInterface*>& Commands) const;
+	bool Contains(IEventCommandInterface* Command) const;
 	UEdGraph* GetGraph() const { return Graph; }
 	void SetGraph(UEdGraph* InGraph) { Graph = InGraph; }
 	UBaseCommand* CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode, UBaseCommand* FromCommand);
-	void RegisterCommand(const FGuid& NewGuid, UBaseCommand* NewCommand);
 #endif
 
 protected:
 
 private:
 	UPROPERTY(VisibleAnywhere)
-	TArray<UBaseCommand*> Commands;
+	UBaseCommand* RootCommand = nullptr;
 
 #if WITH_EDITORONLY_DATA
 
