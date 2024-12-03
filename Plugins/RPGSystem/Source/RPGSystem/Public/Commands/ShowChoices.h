@@ -1,6 +1,8 @@
 #pragma once
 
 #include "BaseCommand.h"
+#include "Commands/DialogueChoice.h"
+
 #include "ShowChoices.generated.h"
 
 class AMapEventActor;
@@ -11,8 +13,11 @@ class RPGSYSTEM_API UShowChoices : public UBaseCommand
 	GENERATED_BODY()
 
 public:
+	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Message")
-	TArray<FText> Choices;
+	TArray<FDialogueChoice> Choices;
+
 
 private:
 

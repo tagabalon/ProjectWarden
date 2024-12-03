@@ -70,5 +70,7 @@ public:
 
 protected:
 	FVector2D GraphPosition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UBaseCommand* NextCommand;
 };

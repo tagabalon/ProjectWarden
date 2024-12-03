@@ -49,6 +49,7 @@ void AMapEventActor::CreateInteractPrompt()
 		Prompt->SetWidgetSpace(EWidgetSpace::Screen);
 		Prompt->SetDrawSize(FVector2D(140.f, 100.0f));
 		Prompt->SetWidgetClass(PromptWidget);
+		Prompt->SetWorldLocation(GetActorLocation());
 	}
 }
 
@@ -121,6 +122,7 @@ void AMapEventActor::OnInteract()
 	if (MapEvent != nullptr)
 	{
 		MapEvent->Execute(UGameplayStatics::GetPlayerController(this, 0), this);
+		IInteractInterface::Execute_HideInteract(InteractWidget);
 	}
 }
 

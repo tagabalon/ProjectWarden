@@ -40,7 +40,8 @@ public class RPGSystem : ModuleRules
 				"Slate",
 				"SlateCore",
 				"UMG",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"EnhancedInput"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

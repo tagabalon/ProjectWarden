@@ -26,7 +26,8 @@ public:
 	//AActor
 	virtual void Tick(float DeltaTime) override;
 
-
+	void EnableMovement(bool IsEnabled) { bMovementEnabled = IsEnabled; }
+	void EnableCamera(bool IsEnabled) {	bCameraEnabled = IsEnabled;	}
 
 
 protected:
@@ -61,6 +62,9 @@ private:/*
 	FEnhancedInputActionValueBinding* CameraActionValue = nullptr;
 	FEnhancedInputActionValueBinding* MoveActionValue = nullptr;
 	AMapEventActor* InteractableObject = nullptr;
+
+	bool bMovementEnabled{ true };
+	bool bCameraEnabled{ true };
 
 	
 	UFUNCTION()

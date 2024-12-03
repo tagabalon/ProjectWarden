@@ -5,8 +5,6 @@
 #include "RPGSettings.h"
 #include "MapEvent.h"
 
-#include "Blueprint/WidgetTree.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/HUD.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(ShowText)

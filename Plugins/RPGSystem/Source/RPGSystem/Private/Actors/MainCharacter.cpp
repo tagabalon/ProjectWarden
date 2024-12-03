@@ -71,6 +71,9 @@ void AMainCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 
 void AMainCharacter::InputActionCamera()
 {
+	if (!bCameraEnabled)
+		return;
+
 	const FVector2D& InputValue = CameraActionValue->GetValue().Get<FVector2D>();
 
 	On_Input_Camera(InputValue.X, InputValue.Y);
@@ -82,6 +85,9 @@ void AMainCharacter::InputActionCamera()
 
 void AMainCharacter::InputActionMove()
 {
+	if (!bMovementEnabled)
+		return;
+
 	const FVector2D& InputValue = MoveActionValue->GetValue().Get<FVector2D>();
 
 	On_Input_Move(InputValue.X, InputValue.Y);

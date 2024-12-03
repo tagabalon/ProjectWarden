@@ -33,6 +33,9 @@ public:
 	virtual bool CanUserDeleteNode() const;
 	virtual bool CanDuplicateNode() const override;
 
+	/** UEdGraphNode Impl. */
+	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
+
 	// UGraphNodeDialogueBase Impl
 	virtual FText GetContextMenuName() const;
 

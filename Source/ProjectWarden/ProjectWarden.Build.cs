@@ -7,8 +7,9 @@ public class ProjectWarden : ModuleRules
 	public ProjectWarden(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		bEnableUndefinedIdentifierWarnings = false;
+
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "RPGSystem" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

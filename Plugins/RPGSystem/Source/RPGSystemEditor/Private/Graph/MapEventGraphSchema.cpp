@@ -1,6 +1,5 @@
 #include "Graph/MapEventGraphSchema.h"
 
-#include "Commands/Start.h"
 #include "Graph/MapEventGraph.h"
 #include "Graph/Nodes/CommandNode.h"
 #include "Graph/MapEventGraphSchema_Actions.h"

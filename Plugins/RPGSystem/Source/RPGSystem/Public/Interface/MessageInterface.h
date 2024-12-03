@@ -5,6 +5,7 @@
 #include "UObject/Interface.h"
 #include "MessageInterface.generated.h"
 
+class UShowChoices;
 class UShowText;
 class FText;
 
@@ -26,6 +27,9 @@ class RPGSYSTEM_API IMessageInterface
 public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Message")
 	void ShowText(UShowText* ShowTextData);
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Message")
+	void ShowChoices(UShowChoices* ShowChoicesData);
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Message")
 	void ShowCaption(const FText& Speaker, const FText& Text);

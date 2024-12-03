@@ -1,11 +1,12 @@
 #include "Graph/Nodes/CommandNode.h"
 #include "Graph/MapEventGraphSchema.h"
 #include "Graph/Slate/SGraphNodePlaySpeech.h"
+#include "Graph/Slate/SGraphNodeShowChoices.h"
 #include "Graph/Slate/SGraphNodeShowText.h"
 
 #include "Commands/BaseCommand.h"
-#include "Commands/Start.h"
 #include "Commands/PlaySpeech.h"
+#include "Commands/ShowChoices.h"
 #include "Commands/ShowText.h"
 
 #include "SGraphNodeDefault.h"
@@ -17,7 +18,7 @@
 UCommandNode::UCommandNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)	
 {
-	AssignedCommandClasses = { UBaseCommand::StaticClass(), UStart::StaticClass() };
+	AssignedCommandClasses = { UBaseCommand::StaticClass()};
 }
 
 void UCommandNode::SetCommandData(UBaseCommand* NewCommand)
@@ -40,6 +41,10 @@ TSharedPtr<SGraphNode> UCommandNode::CreateVisualWidget()
 	else if (Command->GetClass() == UPlaySpeech::StaticClass())
 	{
 		return SNew(SGraphNodePlaySpeech, this);
+	}
+	else if (Command->GetClass() == UShowChoices::StaticClass())
+	{
+		return SNew(SGraphNodeShowChoices, this);
 	}
 	return SNew(SGraphNodeDefault);
 }
@@ -173,4 +178,25 @@ FText UCommandNode::GetContextMenuName() const
 	return FText::FromString("Start");
 }
 
+void UCommandNode::PinConnectionListChanged(UEdGraphPin* Pin)
+{
+	Super::PinConnectionListChanged(Pin);
+
+	if (Pin->Direction == EEdGraphPinDirection::EGPD_Input && Pin->LinkedTo.Num() > 0)
+	{
+		if (UEdGraphPin* LinkedPin = Pin->LinkedTo[0])
+		{
+			if (UEdGraphNode* Owner = LinkedPin->GetOwningNode())
+			{
+				if (UCommandNode* PrevCommand = CastChecked<UCommandNode>(Owner))
+				{
+					if (UBaseCommand* CommandData = PrevCommand->GetCommandData())
+					{
+						CommandData->SetNextCommand(GetCommandData());
+					}
+				}
+			}
+		}
+	}
+}
 #undef LOCTEXT_NAMESPACE

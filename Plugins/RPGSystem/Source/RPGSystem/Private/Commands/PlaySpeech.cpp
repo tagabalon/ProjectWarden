@@ -1,6 +1,8 @@
 #include "Commands/PlaySpeech.h"
 
+#include "Actors/MainCharacter.h"
 #include "Actors/MapEventActor.h"
+#include "Commands/ShowChoices.h"
 #include "Commands/ShowText.h"
 #include "Interface/MessageInterface.h"
 #include "RPGSettings.h"
@@ -37,6 +39,12 @@ void UPlaySpeech::Execute(APlayerController* InPlayer, AMapEventActor* InMapEven
 				IMessageInterface::Execute_ShowCaption(HUD, FText::FromString("Actor"), Text);
 			}
 		}
+
+		if (AMainCharacter* MainCharacter = CastChecked<AMainCharacter>(Player->GetPawn()))
+		{
+			MainCharacter->EnableMovement(false);
+			MainCharacter->EnableCamera(false);
+		}
 	}
 }
 
@@ -48,7 +56,7 @@ void UPlaySpeech::OnSpeechPlayed()
 	if (NextCommand != nullptr)
 	{
 		NextCommand->Execute(Player, MapEventActor);
-		if (NextCommand->IsA(UShowText::StaticClass()) || NextCommand->IsA(StaticClass()))
+		if (NextCommand->IsA(UShowText::StaticClass()) || NextCommand->IsA(StaticClass()) || NextCommand->IsA(UShowChoices::StaticClass()))
 		{
 			return;
 		}
@@ -64,5 +72,11 @@ void UPlaySpeech::OnSpeechPlayed()
 		{
 			IMessageInterface::Execute_CloseMessages(HUD);
 		}
+	}
+
+	if (AMainCharacter* MainCharacter = CastChecked<AMainCharacter>(Player->GetPawn()))
+	{
+		MainCharacter->EnableMovement(true);
+		MainCharacter->EnableCamera(true);
 	}
 }
