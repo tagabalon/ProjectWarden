@@ -17,6 +17,8 @@ void UPlaySpeech::Execute(APlayerController* InPlayer, AMapEventActor* InMapEven
 {
 	Player = InPlayer;
 	MapEventActor = InMapEventActor;
+	SpeechPlayed.BindUFunction(this, "OnSpeechPlayed");
+
 	if (MapEventActor != nullptr)
 	{
 		if (UObject* AudioSource = MapEventActor->GetDefaultSubobjectByName("AudioSource"))
@@ -25,7 +27,6 @@ void UPlaySpeech::Execute(APlayerController* InPlayer, AMapEventActor* InMapEven
 			if (AudioComponent != nullptr)
 			{
 				AudioComponent->OnAudioFinished.Add(SpeechPlayed);
-				SpeechPlayed.BindUFunction(this, "OnSpeechPlayed");
 
 				AudioComponent->SetSound(Speech);
 				AudioComponent->Play();
@@ -52,6 +53,7 @@ void UPlaySpeech::Execute(APlayerController* InPlayer, AMapEventActor* InMapEven
 void UPlaySpeech::OnSpeechPlayed()
 {
 	AudioComponent->OnAudioFinished.Remove(SpeechPlayed);
+	SpeechPlayed.Unbind();
 
 	if (NextCommand != nullptr)
 	{

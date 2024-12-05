@@ -95,5 +95,6 @@ private:
 	AMainCharacter* GlintedCharacter = nullptr;
 	UUserWidget* InteractWidget = nullptr;
 	bool bIsCharacterPrompted = false;
+	bool bIsEventRunning = false;
 
 };

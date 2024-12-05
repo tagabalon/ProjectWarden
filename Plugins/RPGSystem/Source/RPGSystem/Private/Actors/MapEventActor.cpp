@@ -119,10 +119,11 @@ bool AMapEventActor::CharacterCanBePrompted() const
 
 void AMapEventActor::OnInteract()
 {
-	if (MapEvent != nullptr)
+	if (MapEvent != nullptr && !bIsEventRunning)
 	{
 		MapEvent->Execute(UGameplayStatics::GetPlayerController(this, 0), this);
 		IInteractInterface::Execute_HideInteract(InteractWidget);
+		bIsEventRunning = true;
 	}
 }
 
