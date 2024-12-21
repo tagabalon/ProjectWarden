@@ -28,4 +28,6 @@ protected:
 
 private:
 	UShowChoices* ShowChoicesCommand;
+
+	void OnChoicesChanged();
 };

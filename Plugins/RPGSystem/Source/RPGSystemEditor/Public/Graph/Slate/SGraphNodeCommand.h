@@ -20,6 +20,7 @@ public:
 	/// SGraphNode 
 	virtual void UpdateGraphNode() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+	virtual void CreatePinWidgets() override;
 
 protected:
 	virtual TSharedRef<SWidget> ShowLabelAndValue(FText Label, const TSharedRef<SWidget>& Value, FText Tooltip);

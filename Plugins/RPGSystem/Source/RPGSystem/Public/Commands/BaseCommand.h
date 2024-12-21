@@ -15,6 +15,11 @@ class RPGSYSTEM_API UBaseCommand : public UObject, public IEventCommandInterface
 
 public:
 
+	UEdGraphNode* GetGraphNode() const { return GraphNode; }
+
+	UFUNCTION(BlueprintCallable, Category = "Command")
+	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
+
 	UPROPERTY()
 	UEdGraphNode* GraphNode;
 
@@ -23,18 +28,14 @@ public:
 	void SetNextCommand(UBaseCommand* InNextCommand) { NextCommand = InNextCommand; }
 #endif
 
-public:
-	UEdGraphNode* GetGraphNode() const { return GraphNode; }
+	static FText CategoryMessage;
+	static FText CategoryCutscene;
 
 	UPROPERTY()
 	FGuid NodeGuid;
 
-public:
-	UFUNCTION(BlueprintCallable, Category = "Command")
-	void SetGuid(const FGuid& NewGuid) { NodeGuid = NewGuid; }
 
-
-public:
+	//UEventCommandInterface
 	virtual FText GetCategory() const
 	{
 		return FText::FromString("Commands");
@@ -68,9 +69,11 @@ public:
 
 	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
-protected:
-	FVector2D GraphPosition;
+	virtual bool IsUINeeded() { return false; }
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UBaseCommand* NextCommand;
+
+	FVector2D GraphPosition;
 };

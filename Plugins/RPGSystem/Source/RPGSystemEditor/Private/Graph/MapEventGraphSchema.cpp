@@ -93,7 +93,7 @@ void UMapEventGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
     SetNodeMetaData(CommandNode, FNodeMetadata::DefaultGraphNode);
 
     UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(&Graph);
-    MapEventGraph->SetStartNode(CommandNode);
+    //MapEventGraph->SetStartNode(CommandNode);
 
     //const UMapEvent* AssetClassDefaults = GetEditedAssetOrClassDefault(&Graph);
 
@@ -157,6 +157,7 @@ const FPinConnectionResponse UMapEventGraphSchema::CanCreateConnection(const UEd
     // Else allow it but break all connections
     return FPinConnectionResponse(CONNECT_RESPONSE_BREAK_OTHERS_AB, TEXT(""));
 }
+
 //
 //UEdGraphNode* FNewCommandNodeAction::PerformAction(UEdGraph* parentGraph, UEdGraphPin* fromPin, const FVector2D location, bool bSelectNewNode) {
 //

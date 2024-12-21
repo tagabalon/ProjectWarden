@@ -20,9 +20,13 @@ public:
 
 	void SetCommandData(UBaseCommand* NewCommand);
 	UBaseCommand* GetCommandData() const { return Command; }
-
-	void CreateInputPin(int32 Index);
-	void CreateOutputPin(int32 Index);	
+	
+	void AllocateBranchPins();
+	UEdGraphPin* CreateInputPin();
+	UEdGraphPin* CreateOutputPin();
+	int32 GetPinIndex(UEdGraphPin* Pin) const;
+	void RegenerateNodeConnections(UMapEventGraph* MapEventGraph);
+	void LoadPins();
 
 	// UEdGraphNode
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
@@ -32,6 +36,8 @@ public:
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
 	virtual bool CanUserDeleteNode() const;
 	virtual bool CanDuplicateNode() const override;
+	virtual void NodeConnectionListChanged() override;
+	virtual FText GetPinDisplayName(const UEdGraphPin* InPin) const override;
 
 	/** UEdGraphNode Impl. */
 	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
@@ -45,11 +51,18 @@ public:
 	UPROPERTY()
 	TSoftClassPtr<UBaseCommand> EventCommandClass;
 
-	TArray<UEdGraphPin*> InputPins;
-	TArray<UEdGraphPin*> OutputPins;
+	UEdGraphPin* EntrancePin = nullptr;
+	UEdGraphPin* ExitPin = nullptr;
+	TArray<UEdGraphPin*> BranchPins;
 
+	static FName EntrancePinName;
+	static FName ExitPinName;
 
 private:
+	UBaseCommand* GetConnectedCommand(UEdGraphPin* Pin) const;
+	UEdGraphPin* GetNextCommandPin(UMapEventGraph* MapEventGraph) const;
+	UEdGraphPin* GetBranchPinNamed(FName Name) const;
+
 	UPROPERTY(Instanced)
 	UBaseCommand* Command;
 };

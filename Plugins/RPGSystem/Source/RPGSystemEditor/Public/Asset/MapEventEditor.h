@@ -17,31 +17,14 @@ class UMapEvent;
 class FMapEventEditor : public FAssetEditorToolkit, public FEditorUndoClient, public FGCObject, public FNotifyHook
 {
 public:
-	void InitMapEventEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
-
-	static const FName DetailsTab;
-	static const FName GraphTab;
-
-protected:
-	virtual void CreateToolbar();
-	virtual void BindToolbarCommands();
-	virtual void CreateWidgets();
-	virtual void CreateGraphWidget();
-
-	TObjectPtr<UMapEvent> MapEvent;
-
-	TSharedPtr<SMapEventGraphEditor> GraphEditor;
-	TSharedPtr<class IDetailsView> DetailsView;
-
-private:
-	FName CurrentUISelection;
-
-public:
 	FMapEventEditor();
 	virtual ~FMapEventEditor() override;
 
+	void InitMapEventEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
 	UMapEvent* GetMapEvent() const { return MapEvent; }
 	TSharedPtr<SGraphEditor> GetMapEventGraph() const { return GraphEditor; }
+	void SetUISelectionState(const FName SelectionOwner);
+	virtual void ClearSelectionStateFor(const FName SelectionOwner);
 
 	// FGCObject
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
@@ -73,13 +56,30 @@ public:
 	virtual void SaveAssetAs_Execute() override;*/
 
 	bool IsTabFocused(const FTabId& TabId) const;
+
+	static const FName DetailsTab;
+	static const FName GraphTab;
+
+protected:
+	void CreateGraph();
+	virtual void CreateToolbar();
+	virtual void BindToolbarCommands();
+	virtual void CreateWidgets();
+	virtual void CreateGraphWidget();
+
+	TObjectPtr<UMapEvent> MapEvent;
+
+	TSharedPtr<SMapEventGraphEditor> GraphEditor;
+	TSharedPtr<class IDetailsView> DetailsView;
+
 private:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args) const;
 	TSharedRef<SDockTab> SpawnTab_Graph(const FSpawnTabArgs& Args) const;
 
 	void DoPresaveAssetUpdate();
+	void OnDeleteNodes();
+	bool CanDeleteNodes();
 
-public:
-	void SetUISelectionState(const FName SelectionOwner);
-	virtual void ClearSelectionStateFor(const FName SelectionOwner);
+	FName CurrentUISelection;
+	TSharedPtr<FUICommandList> EditorCommands;
 };

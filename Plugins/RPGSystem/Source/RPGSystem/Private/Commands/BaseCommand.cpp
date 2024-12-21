@@ -4,6 +4,9 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BaseCommand)
 
+FText UBaseCommand::CategoryMessage = FText::FromString(TEXT("Message"));
+FText UBaseCommand::CategoryCutscene = FText::FromString(TEXT("Cutscene"));
+
 UBaseCommand::UBaseCommand(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, GraphNode(nullptr)

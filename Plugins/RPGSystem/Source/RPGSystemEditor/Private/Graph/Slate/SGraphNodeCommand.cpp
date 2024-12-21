@@ -1,6 +1,7 @@
 #include "Graph/Slate/SGraphNodeCommand.h"
 
 #include "MapEventEditorStyle.h"
+#include "Graph/Nodes/CommandNode.h"
 
 #include "NodeFactory.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -40,12 +41,12 @@ void SGraphNodeCommand::UpdateGraphNode()
 		.VAlign(VAlign_Center)
 		.HAlign(HAlign_Center)
 		.BorderBackgroundColor(FLinearColor::White)
-		//.BorderImage(FSlateColorBrush(FLinearColor::White))
-		.Padding(FMargin(5, 2, 10, 2))
+		.BorderImage(FMapEventEditorStyle::GetBrush("CommandNode.Header"))
+		.Padding(FMargin(5, 7, 5, 10))
 		[
 			SNew(STextBlock)
 				//.ShadowColorAndOpacity(FLinearColor::Black)
-				.ColorAndOpacity(FLinearColor::Black)
+				.ColorAndOpacity(FLinearColor::White)
 				//.ShadowOffset(FIntPoint(-1, 1))
 				//.Font(FSlateFontInfo("Veranda", 16))
 				// localized text to be translated with a generic name HelloSlateText
@@ -53,7 +54,6 @@ void SGraphNodeCommand::UpdateGraphNode()
 		];
 
 	TSharedRef<SBorder> NodeContent = SNew(SBorder)
-		//.BorderImage(FMapEventEditorStyle::GetBrush("CommandNode.Body"))
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Fill)
 		[
@@ -62,7 +62,7 @@ void SGraphNodeCommand::UpdateGraphNode()
 				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Left)
 				.AutoWidth()
-				.Padding(FMargin(-30, 0, 0, 20))
+				.Padding(FMargin(10, 0, 0, 20))
 				[
 					SAssignNew(LeftNodeBox, SVerticalBox)
 				]
@@ -75,7 +75,7 @@ void SGraphNodeCommand::UpdateGraphNode()
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.HAlign(HAlign_Right)
-				.Padding(FMargin(20, 0, 0, -30))
+				.Padding(FMargin(20, 0, 0, 10))
 				[
 					SAssignNew(RightNodeBox, SVerticalBox)
 				]
@@ -184,6 +184,19 @@ void SGraphNodeCommand::UpdateGraphNode()
 	//}
 }
 
+void SGraphNodeCommand::CreatePinWidgets()
+{
+	if (CommandNode->EntrancePin != nullptr)
+	{
+		CreateStandardPinWidget(CommandNode->EntrancePin);
+	}
+	for (int32 PinIndex = 0; PinIndex < CommandNode->BranchPins.Num(); ++PinIndex)
+	{
+		CreateStandardPinWidget(CommandNode->BranchPins[PinIndex]);
+	}
+	CreateStandardPinWidget(CommandNode->ExitPin);
+}
+
 void SGraphNodeCommand::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 {
 	PinToAdd->SetOwner(SharedThis(this));
@@ -194,6 +207,7 @@ void SGraphNodeCommand::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	{
 		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
 	}
+	PinToAdd->SetColorAndOpacity(FLinearColor::Black);
 
 	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
 	{

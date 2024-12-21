@@ -22,7 +22,8 @@ void FMapEventEditorStyle::Initialize()
 	StyleSet->Set("ClassIcon.MapEvent", new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icons/MapEventIcon"), TEXT(".png")), Icon32));
 	StyleSet->Set("ClassThumbnail.MapEvent", new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icons/MapEventThumbnail"), TEXT(".png")), Icon128));
 
-	StyleSet->Set("CommandNode.Body", new FSlateBoxBrush(StyleSet->RootToContentDir(TEXT("Nodes/NodeBody"), TEXT(".png")), FMargin(16.f / 64.f)));
+	StyleSet->Set("CommandNode.Body", new FSlateBoxBrush(StyleSet->RootToContentDir(TEXT("Nodes/NodeBody"), TEXT(".png")), FMargin(16.f / 70.f)));
+	StyleSet->Set("CommandNode.Header", new FSlateBoxBrush(StyleSet->RootToContentDir(TEXT("Nodes/NodeHeader"), TEXT(".png")), FMargin(6.f / 32.f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

@@ -1,19 +1,23 @@
 #include "Graph/Nodes/CommandNode.h"
-#include "Graph/MapEventGraphSchema.h"
-#include "Graph/Slate/SGraphNodePlaySpeech.h"
-#include "Graph/Slate/SGraphNodeShowChoices.h"
-#include "Graph/Slate/SGraphNodeShowText.h"
 
 #include "Commands/BaseCommand.h"
 #include "Commands/PlaySpeech.h"
 #include "Commands/ShowChoices.h"
 #include "Commands/ShowText.h"
+#include "Graph/MapEventGraph.h"
+#include "Graph/MapEventGraphSchema.h"
+#include "Graph/Slate/SGraphNodePlaySpeech.h"
+#include "Graph/Slate/SGraphNodeShowChoices.h"
+#include "Graph/Slate/SGraphNodeShowText.h"
 
 #include "SGraphNodeDefault.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(CommandNode)
 
 #define LOCTEXT_NAMESPACE "CommandNode"
+
+FName UCommandNode::EntrancePinName = FName::FName("Entrance");
+FName UCommandNode::ExitPinName = FName::FName("Exit");
 
 UCommandNode::UCommandNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)	
@@ -23,10 +27,59 @@ UCommandNode::UCommandNode(const FObjectInitializer& ObjectInitializer)
 
 void UCommandNode::SetCommandData(UBaseCommand* NewCommand)
 {
-	this->Command = NewCommand;
-	AllocateDefaultPins();
+	Command = NewCommand;
+
+	ReconstructNode();	
 }
 
+void UCommandNode::AllocateBranchPins()
+{
+	if (Command != nullptr && Command->IsA<UBranchCommand>())
+	{
+		UBranchCommand* BranchCommand = CastChecked<UBranchCommand>(Command);
+		BranchCommand->Modify(false);
+
+		Modify(false);
+		BranchPins.Empty();
+
+		uint32 Index = 0;
+		for(const FBranch& Branch : BranchCommand->GetBranches())
+		{
+			UEdGraphPin* BranchPin = CreateOutputPin();
+			BranchPins.AddUnique(BranchPin);
+
+			BranchCommand->SetBranchPin(Index, BranchPin);
+			Index++;
+		}
+	}
+}
+
+void UCommandNode::RegenerateNodeConnections(UMapEventGraph* MapEventGraph)
+{
+	const UMapEventGraphSchema* Schema = CastChecked<UMapEventGraphSchema>(GetSchema());
+	if (UEdGraphPin* NextCommandPin = GetNextCommandPin(MapEventGraph))
+	{
+		if (ExitPin->LinkedTo.Num() > 0 && ExitPin->LinkedTo[0] == nullptr)
+		{
+			ExitPin->LinkedTo.Empty();
+		}
+		Schema->TryCreateConnection(ExitPin, NextCommandPin);
+	}
+	if (Command != nullptr && Command->IsA<UBranchCommand>())
+	{
+		UBranchCommand* BranchCommand = Cast<UBranchCommand>(Command);
+		int32 Index = 0;
+		for (UEdGraphPin* BranchPin : BranchPins)
+		{
+			UBaseCommand* BranchConnection = BranchCommand->GetBranchCommand(Index);
+			if (UCommandNode* BranchNode = MapEventGraph->FindNodeOf(BranchConnection))
+			{
+				Schema->TryCreateConnection(BranchPin, BranchNode->EntrancePin);
+			}
+			Index++;
+		}
+	}
+}
 
 TSharedPtr<SGraphNode> UCommandNode::CreateVisualWidget()
 {
@@ -62,30 +115,73 @@ FText UCommandNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 
 void UCommandNode::ReconstructNode()
 {
+	Pins.Empty();
+	BranchPins.Empty();
+
 	AllocateDefaultPins();
+	AllocateBranchPins();
+}
+
+
+FText UCommandNode::GetPinDisplayName(const UEdGraphPin* InPin) const
+{
+	if (InPin->Direction == EEdGraphPinDirection::EGPD_Input)
+	{
+		return FText::FromString(TEXT(""));
+	}
+
+	if (Command == nullptr)
+	{
+		return FText::FromString(TEXT("Do..."));
+	}
+	if (InPin == ExitPin)
+	{
+		return  FText::FromString(TEXT("Then..."));
+	}
+
+	if (Command != nullptr && Command->IsA<UBranchCommand>())
+	{
+		UBranchCommand* BranchCommand = Cast<UBranchCommand>(Command);
+
+		int32 Index = BranchPins.IndexOfByPredicate([&](const UEdGraphPin* Pin) { return InPin == Pin; });
+		if (Index >= 0 && Index < BranchCommand->GetBranchSize())
+		{
+			const FBranch& Branch = BranchCommand->GetBranches()[Index];
+			if (UBranchParameter* BranchParam = Branch.BranchParam)
+			{
+				return BranchParam->GetDisplayName();
+			}
+		}
+	}
+
+	return Super::GetPinDisplayName(InPin);
 }
 
 void UCommandNode::AllocateDefaultPins()
 {
-	Pins.Empty();
+	Modify(false);
 	if (IsValid(Command))
 	{
-		InputPins.Empty();
-		for (uint32 i = 0; i < Command->GetInputPins(); i++)
-		{
-			CreateInputPin(i);
-		}
+		EntrancePin = CreateInputPin();
+		EntrancePin->PinName = EntrancePinName;
+	}
 
-		OutputPins.Empty();
-		for (uint32 i = 0; i < Command->GetOutputPins(); i++)
-		{
-			CreateOutputPin(i);
-		}
-	}
-	else
+	ExitPin = CreateOutputPin();
+	ExitPin->PinName = ExitPinName;
+}
+
+int32 UCommandNode::GetPinIndex(UEdGraphPin* Pin) const
+{
+	int32 Index = 0;
+	for (UEdGraphPin* BranchPin : BranchPins)
 	{
-		CreateOutputPin(0);
+		if (BranchPin == Pin)
+		{
+			return Index;
+		}
+		Index++;
 	}
+	return -1;
 }
 
 void UCommandNode::AutowireNewNode(UEdGraphPin* FromPin)
@@ -99,13 +195,12 @@ void UCommandNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 		TSet<UEdGraphNode*> NodeList;
 
-		if (InputPins.Num() > 0)
+		if (EntrancePin != nullptr)
 		{
-			check(InputPins[0]);
-			FPinConnectionResponse Response = Schema->CanCreateConnection(FromPin, InputPins[0]);
+			FPinConnectionResponse Response = Schema->CanCreateConnection(FromPin, EntrancePin);
 			if (Response.Response != CONNECT_RESPONSE_DISALLOW)
 			{
-				if (Schema->TryCreateConnection(FromPin, InputPins[0]))
+				if (Schema->TryCreateConnection(FromPin, EntrancePin))
 				{
 					NodeList.Add(FromPin->GetOwningNode());
 					NodeList.Add(this);
@@ -116,9 +211,9 @@ void UCommandNode::AutowireNewNode(UEdGraphPin* FromPin)
 			{
 				FromPin->BreakAllPinLinks();
 				
-				if (OutputPins.Num() > 0)
+				if (ExitPin != nullptr)
 				{
-					if (Schema->TryCreateConnection(OutputPins[0], OldLinkedPin))
+					if (Schema->TryCreateConnection(ExitPin, OldLinkedPin))
 					{
 						NodeList.Add(this);
 						NodeList.Add(OldLinkedPin->GetOwningNode());
@@ -136,22 +231,39 @@ void UCommandNode::AutowireNewNode(UEdGraphPin* FromPin)
 	}
 }
 
-void UCommandNode::CreateInputPin(int32 Index)
+void UCommandNode::LoadPins()
 {
-	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, FName(NAME_None), Index);
-	check(NewPin);
-
-	InputPins.Emplace(NewPin);
+	BranchPins.Empty();
+	for (UEdGraphPin* Pin : Pins)
+	{
+		if (Pin->Direction == EEdGraphPinDirection::EGPD_Input)
+		{
+			EntrancePin = Pin;
+		}
+		else if (Pin->Direction == EEdGraphPinDirection::EGPD_Output)
+		{
+			if (Pin->PinName == ExitPinName)
+			{
+				ExitPin = Pin;
+			}
+			else
+			{
+				BranchPins.Add(Pin);
+			}
+		}
+	}
 }
 
-void UCommandNode::CreateOutputPin(int32 Index)
+UEdGraphPin* UCommandNode::CreateInputPin()
 {
 	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
-	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, FName::FName("Then..."), Index);
-	check(NewPin);
+	return CreatePin(EGPD_Input, PinType, FName(NAME_None), INDEX_NONE);
+}
 
-	OutputPins.Emplace(NewPin);
+UEdGraphPin* UCommandNode::CreateOutputPin()
+{
+	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	return CreatePin(EGPD_Output, PinType, FName(NAME_None), INDEX_NONE);
 }
 
 void UCommandNode::OnUpdateMapEvent(int32 UpdateFlags)
@@ -167,6 +279,102 @@ bool UCommandNode::CanUserDeleteNode() const
 bool UCommandNode::CanDuplicateNode() const
 {
 	return Command != nullptr;
+}
+
+void UCommandNode::NodeConnectionListChanged()
+{
+	if (Command != nullptr)
+	{
+		Command->Modify();
+		if (ExitPin != nullptr)
+		{
+			Command->SetNextCommand(GetConnectedCommand(ExitPin));
+		}
+
+		if (Command->IsA<UBranchCommand>())
+		{
+			UBranchCommand* BranchCommand = Cast<UBranchCommand>(Command);
+			int32 Index = 0;
+			for (UEdGraphPin* BranchPin : BranchPins)
+			{
+				UBaseCommand* Connected = GetConnectedCommand(BranchPin);
+				BranchCommand->SetBranchCommand(Connected, Index);
+				Index++;
+			}
+		}
+	}
+	else
+	{
+		if (ExitPin != nullptr)
+		{
+			if (UObject* Outer = GetOuter())
+			{
+				if (Outer->IsA<UMapEventGraph>())
+				{
+					UMapEventGraph* Graph = Cast<UMapEventGraph>(Outer);
+					if (UEdGraphPin* OtherPin = GetNextCommandPin(Graph))
+					{
+						Graph->SetStartNode(Cast<UCommandNode>(OtherPin->GetOwningNode()));
+					}
+				}
+			}
+		}
+	}
+}
+
+UBaseCommand* UCommandNode::GetConnectedCommand(UEdGraphPin* Pin) const
+{
+	if (Pin == nullptr || Pin->Direction != EEdGraphPinDirection::EGPD_Output || !Pin->HasAnyConnections())
+	{
+		return nullptr;
+	}
+
+	if (UEdGraphPin* Connection = Pin->LinkedTo[0])
+	{
+		if (UCommandNode* NextNode = Cast<UCommandNode>(Connection->GetOwningNode()))
+		{
+			return NextNode->GetCommandData();
+		}
+	}
+
+	return nullptr;
+}
+
+UEdGraphPin* UCommandNode::GetNextCommandPin(UMapEventGraph* MapEventGraph) const
+{
+	if (Command != nullptr)
+	{
+		if (IEventCommandInterface* Next = Command->GetNextCommand())
+		{
+			if (UBaseCommand* NextCommand = Cast<UBaseCommand>(Next))
+			{
+				if (UCommandNode* NextCommandNode = MapEventGraph->FindNodeOf(NextCommand))
+				{
+					return NextCommandNode->EntrancePin;
+				}
+			}
+		}
+	}
+	else
+	{
+		if (UCommandNode* RootNode = MapEventGraph->GetRootCommandNode())
+		{
+			return RootNode->EntrancePin;
+		}
+	}
+	return nullptr;
+}
+
+UEdGraphPin* UCommandNode::GetBranchPinNamed(FName Name) const
+{
+	for (UEdGraphPin* Pin : BranchPins)
+	{
+		if (Pin->GetName() == Name)
+		{
+			return Pin;
+		}
+	}
+	return nullptr;
 }
 
 FText UCommandNode::GetContextMenuName() const

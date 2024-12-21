@@ -13,6 +13,7 @@ void SGraphNodeShowChoices::Construct(const FArguments& InArgs, UEdGraphNode* In
 	check(CommandNode);
 
 	ShowChoicesCommand = Cast<UShowChoices>(CommandNode->GetCommandData());
+	ShowChoicesCommand->OnChoicesChanged.BindRaw(this, &SGraphNodeShowChoices::OnChoicesChanged);
 
 	UpdateGraphNode();
 }
@@ -23,4 +24,10 @@ TSharedRef<SWidget> SGraphNodeShowChoices::ShowContent()
 	return SNew(SBorder)
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Fill);
+}
+
+void SGraphNodeShowChoices::OnChoicesChanged()
+{
+	CommandNode->ReconstructNode();
+	UpdateGraphNode();
 }

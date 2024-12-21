@@ -26,12 +26,12 @@ public:
 	void SetText(FText InText) { Text = InText; }
 	virtual void Execute(APlayerController* Player, AMapEventActor* MapEventActor);
 
-private:
+	bool IsUINeeded() { return true; }
 
 	//BaseCommand
 	virtual FText GetCategory() const
 	{
-		return FText::FromString(TEXT("Message"));
+		return CategoryMessage;
 	}
 
 	virtual FText GetLabel() const {

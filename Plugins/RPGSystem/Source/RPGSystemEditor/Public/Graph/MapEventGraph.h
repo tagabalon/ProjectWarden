@@ -6,6 +6,7 @@
 #include "MapEventGraph.generated.h"
 
 class UMapEventGraphSchema;
+class UBaseCommand;
 class UCommandNode;
 
 UCLASS()
@@ -15,15 +16,25 @@ class RPGSYSTEMEDITOR_API UMapEventGraph : public UEdGraph
 
 public:
 	UMapEventGraph();
-
-	//UCommandNode* CreateCommandNode(const UClass* EventCommandClass EventCommandClass);
+	
+	bool TryCreateNodes(UMapEvent* MapEvent);
+	void FilterUngeneratedCommands(TArray<IEventCommandInterface*>& MapCommands);
 	void OnMapEventGraphChanged(const FEdGraphEditAction& EditAction);
+	UCommandNode* GetRootCommandNode() const;
 	void SetStartNode(UCommandNode* InStartNode);
-
+	void UpdateNodeOf(UBaseCommand* InCommand);
+	UCommandNode* FindNodeOf(UBaseCommand* Command);
+	void VerifyNodeLinks();
 
 private:
+	void GenerateCommands(TArray<IEventCommandInterface*>& MapCommands);
+
 	UPROPERTY()
 	TObjectPtr<UCommandNode> StartNode;
+
+	/*UPROPERTY()
+	TObjectPtr<UCommandNode> RootNode;*/
+	//int32 RootCommandIndex = -1;
 
 
 

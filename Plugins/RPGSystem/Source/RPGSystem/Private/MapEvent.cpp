@@ -2,6 +2,7 @@
 
 
 #include "MapEvent.h"
+#include "Commands/BranchCommand.h"
 
 #include "GameFramework/PlayerController.h"
 
@@ -9,13 +10,7 @@
 
 UMapEvent::UMapEvent(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
-//#if WITH_EDITOR
-//	, Graph(nullptr)
-//#endif
 {
-	/*UStart* StartCommand = CreateDefaultSubobject<UStart>("Start");
-	Commands.Add(StartCommand);*/
-	//RootCommand = StartCommand;
 }
 
 void UMapEvent::Execute(APlayerController* Player, AMapEventActor* MapEventActor)
@@ -24,13 +19,31 @@ void UMapEvent::Execute(APlayerController* Player, AMapEventActor* MapEventActor
 	{
 		RootCommand->Execute(Player, MapEventActor);
 	}
-	//if (RootCommand != nullptr)
-	//	RootCommand->Execute(Player);
+}
+
+UBaseCommand* UMapEvent::GetParentCommand(UBaseCommand* InChild) const
+{
+	UBaseCommand* Parent = RootCommand;
+	while (Parent != nullptr) {
+		if (UBaseCommand* Child = CastChecked<UBaseCommand>(Parent->GetNextCommand()))
+		{
+			if (Child == InChild)
+			{
+				return Parent;
+			}
+			Parent = Child;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return nullptr;
 }
 
 #if WITH_EDITOR
 
-UBaseCommand* UMapEvent::CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode, UBaseCommand* FromCommand)
+UBaseCommand* UMapEvent::CreateCommand(const UClass* EventCommandClass, UEdGraphNode* GraphNode, UBaseCommand* FromCommand, int32 BranchIndex)
 {
 	UBaseCommand* NewCommand = NewObject<UBaseCommand>(this, EventCommandClass, NAME_None, RF_Transactional);
 	NewCommand->SetGraphNode(GraphNode);
@@ -42,12 +55,40 @@ UBaseCommand* UMapEvent::CreateCommand(const UClass* EventCommandClass, UEdGraph
 
 	if (FromCommand != nullptr)
 	{
-		if(Contains(FromCommand))
+		if (Contains(FromCommand))
 		{
-			FromCommand->SetNextCommand(NewCommand);
+			if (FromCommand->IsA<UBranchCommand>() && BranchIndex >= 0)
+			{
+				if (UBranchCommand* BranchCommand = CastChecked<UBranchCommand>(FromCommand))
+				{
+					BranchCommand->SetBranchCommand(NewCommand, BranchIndex);
+				}
+			}
+			else
+			{
+				FromCommand->SetNextCommand(NewCommand);
+			}
+
+
 		}
 	}
 	return NewCommand;
+}
+
+void UMapEvent::DeleteCommand(UBaseCommand* InCommand)
+{
+	if (UBaseCommand* ParentCommand = GetParentCommand(InCommand))
+	{
+		if (UBaseCommand* ChildCommand = CastChecked<UBaseCommand>(InCommand->GetNextCommand()))
+		{
+			ParentCommand->SetNextCommand(ChildCommand);
+		}
+		else
+		{
+			ParentCommand->SetNextCommand(nullptr);
+		}
+	}
+
 }
 
 bool UMapEvent::Contains(IEventCommandInterface* Command) const

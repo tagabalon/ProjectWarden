@@ -5,13 +5,16 @@
 #include "Asset/MapEventEditorContext.h"
 #include "Graph/MapEventGraph.h"
 #include "Graph/MapEventGraphSchema.h"
-#include "MapEventEditorCommands.h"
-#include "Kismet2/BlueprintEditorUtils.h"
-
+#include "Graph/Nodes/CommandNode.h"
 #include "MapEvent.h"
+#include "MapEventEditorCommands.h"
 
 #include "EditorClassUtils.h"
+#include "Framework/Commands/GenericCommands.h"
 #include "GraphEditor.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+
+
 
 #define LOCTEXT_NAMESPACE "MapEventEditor"
 
@@ -32,22 +35,7 @@ void FMapEventEditor::InitMapEventEditor(const EToolkitMode::Type Mode, const TS
 {
     MapEvent = CastChecked<UMapEvent>(ObjectToEdit);
 
-    if (MapEvent->GetGraph() == nullptr)
-    {
-        UEdGraph* NewGraph = FBlueprintEditorUtils::CreateNewGraph(
-            MapEvent,
-            NAME_None,
-            UMapEventGraph::StaticClass(),
-            UMapEventGraphSchema::StaticClass()
-        );
-        check(NewGraph);
-
-        MapEvent->SetGraph(NewGraph);
-        MapEvent->GetGraph()->bAllowDeletion = false;
-
-		const UEdGraphSchema* Schema = NewGraph->GetSchema();
-		Schema->CreateDefaultNodesForGraph(*NewGraph);
-    }
+    CreateGraph();
 
 	/*UMapEventGraph* MapEventGraph = Cast<UMapEventGraph>(MapEvent->GetGraph());
 	if (IsValid(MapEventGraph))
@@ -98,6 +86,38 @@ void FMapEventEditor::InitMapEventEditor(const EToolkitMode::Type Mode, const TS
     RegenerateMenusAndToolbars();
 }
 
+void FMapEventEditor::CreateGraph()
+{
+    UMapEventGraph* MapEventGraph = nullptr;
+
+    if (MapEvent->GetGraph() == nullptr)
+    {
+        UEdGraph* NewGraph = FBlueprintEditorUtils::CreateNewGraph(
+            MapEvent,
+            NAME_None,
+            UMapEventGraph::StaticClass(),
+            UMapEventGraphSchema::StaticClass()
+        );
+        check(NewGraph);
+        MapEvent->SetGraph(NewGraph);
+
+        MapEventGraph = Cast<UMapEventGraph>(NewGraph);
+        if (MapEventGraph->TryCreateNodes(MapEvent))
+        {
+            return;
+        }
+
+        const UEdGraphSchema* Schema = NewGraph->GetSchema();
+        Schema->CreateDefaultNodesForGraph(*NewGraph);
+    }
+    else
+    {
+        MapEventGraph = Cast<UMapEventGraph>(MapEvent->GetGraph());
+    }
+
+    MapEventGraph->VerifyNodeLinks();
+}
+
 void FMapEventEditor::CreateToolbar()
 {
 	/*FName ParentToolbarName;
@@ -142,6 +162,24 @@ void FMapEventEditor::CreateWidgets()
 
 void FMapEventEditor::CreateGraphWidget()
 {
+    if (!EditorCommands.IsValid())
+    {
+        EditorCommands = MakeShareable(new FUICommandList);
+
+        EditorCommands->MapAction(
+            FGenericCommands::Get().Delete,
+            FExecuteAction::CreateRaw(
+                this,
+                &FMapEventEditor::OnDeleteNodes
+            ),
+            FCanExecuteAction::CreateRaw(
+                this,
+                &FMapEventEditor::CanDeleteNodes
+            )
+        );
+
+    }
+
     SAssignNew(GraphEditor, SMapEventGraphEditor, SharedThis(this))
         .DetailsView(DetailsView);
 }
@@ -349,6 +387,64 @@ void FMapEventEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>&
      {
          GraphEditor->ClearSelectionSet();
      }
+ }
+
+ void FMapEventEditor::OnDeleteNodes()
+ {
+     if (!GraphEditor.IsValid())
+     {
+         return;
+     }
+
+     const FScopedTransaction Transaction(FGenericCommands::Get().Delete->GetDescription());
+     GraphEditor->GetCurrentGraph()->Modify();
+
+     FGraphPanelSelectionSet Selected = GraphEditor->GetSelectedNodes();
+     GraphEditor->ClearSelectionSet();
+
+     for (UObject* Item : Selected)
+     {
+         if (UCommandNode* CommandNode = Cast<UCommandNode>(Item))
+         {
+             if (!CommandNode->CanUserDeleteNode())
+             {
+                 continue;
+             }
+
+             UBaseCommand* CommandData = CommandNode->GetCommandData();
+
+             CommandNode->Modify();
+             CommandNode->GetSchema()->BreakNodeLinks(*CommandNode);
+             CommandNode->DestroyNode();
+
+             MapEvent->Modify();
+             MapEvent->DeleteCommand(CommandData);
+         }
+     }
+ }
+
+ bool FMapEventEditor::CanDeleteNodes()
+ {
+     if (!GraphEditor.IsValid())
+     {
+         return false;
+     }
+
+     FGraphPanelSelectionSet Selected = GraphEditor->GetSelectedNodes();
+
+     //Can delete if any selected node can be deleted 
+     for (UObject* Item : Selected)
+     {
+         if (UCommandNode* CommandNode = Cast<UCommandNode>(Item))
+         {
+             if (CommandNode->CanUserDeleteNode())
+             {
+                 return true;
+             }
+         }
+     }
+
+     return false;
  }
 
 //void FMapEventEditor::InitEditor(const EToolkitMode::Type mode, const TSharedPtr<class IToolkitHost>& initToolkitHost, UObject* inObject)

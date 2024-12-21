@@ -42,18 +42,20 @@ UEdGraphNode* FMapEventGraphSchemaAction_NewNode::PerformAction(class UEdGraph* 
 		Schema->SetNodeMetaData(CommandNode, FNodeMetadata::DefaultGraphNode);
 
 		UBaseCommand* FromCommand = nullptr;
+		int32 BranchIndex = -1;
 		if (FromPin != nullptr)
 		{
 			FromPin->Modify();
 			if (UCommandNode* FromNode = Cast<UCommandNode>(FromPin->GetOwningNode()))
 			{
 				FromCommand = FromNode->GetCommandData();
+				BranchIndex = FromNode->GetPinIndex(FromPin);
 			}
 		}
 
 		if (UMapEvent* MapEvent = ParentGraph->GetTypedOuter<UMapEvent>())
 		{
-			UBaseCommand* NewCommand = MapEvent->CreateCommand(EventCommandClass, CommandNode, FromCommand);
+			UBaseCommand* NewCommand = MapEvent->CreateCommand(EventCommandClass, CommandNode, FromCommand, BranchIndex);
 			CommandNode->SetCommandData(NewCommand);
 		}
 

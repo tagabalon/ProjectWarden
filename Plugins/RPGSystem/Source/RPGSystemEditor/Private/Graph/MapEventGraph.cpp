@@ -12,14 +12,62 @@ UMapEventGraph::UMapEventGraph()
 
 }
 
-//UCommandNode* UMapEventGraph::CreateCommandNode(const UClass* EventCommandClass)
-//{
-//	UCommandNode* NewCommandNode = CreateDefaultSubobject<UCommandNode>(FName(EventCommandClass->GetName()));
-//	NewCommandNode->CreateNewGuid();
-//	AddNode(NewCommandNode, false, false);
-//
-//	return NewCommandNode;
-//}
+bool UMapEventGraph::TryCreateNodes(UMapEvent* MapEvent)
+{
+	if (MapEvent == nullptr)
+	{
+		return false;
+	}
+
+	TArray<IEventCommandInterface*> MapCommands;
+	MapEvent->GetCommands(MapCommands);
+	if (MapCommands.Num() == 0)
+	{
+		return false;
+	}
+
+	if (!Nodes.IsEmpty() && MapEvent->GetGraph() == this)
+	{
+		//Remove Commands that already have a Node
+		FilterUngeneratedCommands(MapCommands);
+
+		if (MapCommands.Num() > 0)
+		{
+			GenerateCommands(MapCommands);
+		}
+	}
+
+	MapEvent->SetGraph(this);
+	MapEvent->GetGraph()->bAllowDeletion = false;
+	StartNode = FindNodeOf(MapEvent->GetRootCommand());
+	return true;
+}
+
+void UMapEventGraph::FilterUngeneratedCommands(TArray<IEventCommandInterface*>& MapCommands)
+{
+	for(int32 Index = MapCommands.Num() - 1; Index >= 0; Index--)	
+	{
+		if (FindNodeOf(Cast<UBaseCommand>(MapCommands[Index])))
+		{
+			MapCommands.RemoveAt(Index);
+		}
+	}
+}
+
+UCommandNode* UMapEventGraph::GetRootCommandNode() const
+{
+	return StartNode.Get();
+}
+
+void UMapEventGraph::GenerateCommands(TArray<IEventCommandInterface*>& MapCommands)
+{
+
+}
+
+void UMapEventGraph::VerifyNodeLinks()
+{
+
+}
 
 void UMapEventGraph::SetStartNode(UCommandNode* InStartNode)
 {
@@ -28,9 +76,81 @@ void UMapEventGraph::SetStartNode(UCommandNode* InStartNode)
 
 void UMapEventGraph::OnMapEventGraphChanged(const FEdGraphEditAction& EditAction)
 {
+	TArray<UCommandNode*> ChildrenNodes;
+	GetNodesOfClass<UCommandNode>(ChildrenNodes);
 
+	//Loading pins
+	for (UCommandNode* Node : ChildrenNodes)
+	{
+		Node->LoadPins();
+	}
+	for (UCommandNode* Node : ChildrenNodes)
+	{
+		Node->RegenerateNodeConnections(this);
+	}
+
+	//if (ChildrenNodes.Num() > 1)
+	//{
+	//	for (UCommandNode* Node : ChildrenNodes)
+	//	{
+	//		if (UBaseCommand* Command = Node->GetCommandData())
+	//		{
+	//			if (UObject* Outer = Command->GetOuter())
+	//			{
+	//				if (UMapEvent* MapEvent = Cast<UMapEvent>(Outer))
+	//				{
+	//					MapEvent->Modify();
+	//					//RootNode = FindNodeOf(MapEvent->GetRootCommand());
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	/*Modify(false);
+	for (UCommandNode* Node : ChildrenNodes)
+	{
+		Node->Modify();
+		Node->ReconstructNode();
+	}
+	for (UCommandNode* Node : ChildrenNodes)
+	{
+		Node->RegenerateNodeConnections(this);
+	}*/
 }
 
+UCommandNode* UMapEventGraph::FindNodeOf(UBaseCommand* Command)
+{
+	if (Command != nullptr)
+	{
+		TArray<UCommandNode*> ChildrenNodes;
+		GetNodesOfClass<UCommandNode>(ChildrenNodes);
+		for (UCommandNode* Node : ChildrenNodes)
+		{
+			if (Node->GetCommandData() == Command)
+			{
+				return Node;
+			}
+		}
+	}
+	return nullptr;
+}
+
+
+void UMapEventGraph::UpdateNodeOf(UBaseCommand* InCommand)
+{
+	TArray<UCommandNode*> ChildrenNodes;
+	GetNodesOfClass<UCommandNode>(ChildrenNodes);
+	for (UCommandNode* Node : ChildrenNodes)
+	{
+		if (Node->GetCommandData() == InCommand)
+		{
+			Node->ReconstructNode();
+			break;
+		}
+	}
+}
 
 
 

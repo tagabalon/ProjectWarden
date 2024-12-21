@@ -42,11 +42,12 @@ public:
 
 	virtual void Execute(APlayerController* InPlayer, AMapEventActor* InMapEventActor);
 
-private:
+	bool IsUINeeded() { return true; }
+
 	//BaseCommand
 	virtual FText GetCategory() const
 	{
-		return FText::FromString(TEXT("Cutscene"));
+		return CategoryCutscene;
 	}
 
 	virtual FText GetLabel() const {
